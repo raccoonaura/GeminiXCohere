@@ -9,27 +9,45 @@ with open("cohereLog.txt", "w", encoding="utf-8") as file:
 with open("mergedLog.txt", "w", encoding="utf-8") as file:
     pass
 
+def set_marker():
+    print("\033[s", end="")
+
+def clear_from_marker():
+    print("\033[u", end="")
+    print("\033[J", end="")
+
+set_marker()
 client = Client(api_key=input("Enter Gemini API Key: ").strip())
+clear_from_marker()
+set_marker()
 co = cohere.ClientV2(api_key=input("Enter Cohere API Key: ").strip())
+clear_from_marker()
 question = input("Hello! How can I assist you today? ")
 
 gMsg = []
 cMsg = []
 mMsg = []
-gRes = None
-cRes = None
-mRes = None
+fullR = []
+gRes = ""
+cRes = ""
+mRes = ""
 
 def ask_gemini(question):
     global gRes
-    response = client.models.generate_content(
+    response = client.models.generate_content_stream(
         model="gemini-2.5-flash",
         contents=gMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
         ),
     )
-    gRes = response.text
+    print ("\n----------\n")
+    for chunk in response:
+        print(chunk.text, end="")  # Real-time printing since the merged response can take a while
+        fullR.append(chunk.text)
+    gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
+    fullR.clear()
+    print ("\n\n----------\n\nGenerating full response...")
 
 def ask_cohere(question):
     global cRes
@@ -56,11 +74,11 @@ while True:  # There could be a better way to do this, but this works for now
         gMsg.append({"role": "user", "parts": [{"text": question}]})  # Memorize question (Gemini)
         cMsg.append({"role": "user", "content": question})  # Memorize question (Cohere)
 
+        set_marker()
         t1 = threading.Thread(target=ask_gemini, args=(question,))
         t2 = threading.Thread(target=ask_cohere, args=(question,))
         t1.start()
         t2.start()
-        print("Waiting for responses...")
         t1.join()
         t2.join()
         t3 = threading.Thread(target=merge_responses, args=(question,))
@@ -68,6 +86,7 @@ while True:  # There could be a better way to do this, but this works for now
         t3.join()
 
         # print("\n----------\n\nGemini:\n\n", gRes, "\n\n----------\n\nCohere:\n\n", cRes, "\n\n----------\n\nMerged:\n\n", mRes, "\n\n----------\n")
+        clear_from_marker()
         print ("\n----------\n\n", mRes, "\n\n----------\n")
         with open("geminiLog.txt", "a", encoding="utf-8") as file:
             file.write("User:" + question + "\n\n" + "Bot:" + gRes + "\n\n")
