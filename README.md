@@ -1,18 +1,22 @@
-# GeminiXCohere
-Gemini + Cohere 多模型聊天整合器  
+# Gemini X Cohere
 
-Period: 10/01/25 ~ 01/31/26  
-Minimum Viable Products: CLI demo, GitHub repo, Demo的展示影片  
-Commit標題形式: 月 + 日 + 年 + 當天第幾個版本  
+## 專案簡述
+本專案能同時呼叫 Gemini 與 Cohere，整合回覆，支援多回合對話、思考模式，並允許使用者自備 API key。
 
-已知問題:  
-輸入API時不輸入任何東西就按enter會產生錯誤  
-Gemini的串流回覆太長時 整合過後的回答無法覆蓋全部  
-Gemini整合時有時依然會解釋問題/說明自己要做什麼  
+## 功能特色
+- 使用者自備API key
+- 同時呼叫Gemini及Cohere的回覆並整合
+- 生成完整回答前先匯出即時簡答
+- 多回合對話（記憶系統）
+- 思考模式 (Reasoning)
 
-**新增模型步驟**:  
+## 環境需求
+- Python 3.10+
+- 必要套件：請參考 `requirements.txt`
+- Gemini及Cohere的API Key
 
-輸入自備API Keys  
-定義詢問模型的功能 並產出text回覆  
-把回覆寫入主程式  
-新增記憶功能 能自動寫入每次的問題和回覆  
+## 專案架構
+- src/: 程式碼
+- LICENSE: 程式碼
+- docs/: 文檔
+- README.md: 主入口說明
