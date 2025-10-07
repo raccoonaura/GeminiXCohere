@@ -1,6 +1,6 @@
 from google.genai import types
 from google.genai import Client
-import cohere
+from cohere import ClientV2
 import threading
 from src import logging_handler
 from src import utils
@@ -19,7 +19,7 @@ def initialize_gemini():
 
 def initialize_cohere():
     global co
-    co = cohere.ClientV2(api_key=input("Enter Cohere API Key: ").strip())
+    co = ClientV2(api_key=input("Enter Cohere API Key: ").strip())
 
 def memorize_question(question):
     gMsg.append({"role": "user", "parts": [{"text": question}]})  # Memorize question (Gemini)
@@ -42,9 +42,6 @@ def ask_gemini(question):
         for chunk in response:
             print(chunk.text, end="")  # Real-time printing since the merged response can take a while
             fullR.append(chunk.text)
-        gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
-        fullR.clear()
-        print ("\n\n----------\n\nGenerating full response...")
     else:  # No reasoning
         response = client.models.generate_content_stream(
             model="gemini-2.5-flash",
@@ -56,26 +53,37 @@ def ask_gemini(question):
         for chunk in response:
             print(chunk.text, end="")  # Real-time printing since the merged response can take a while
             fullR.append(chunk.text)
-        gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
-        fullR.clear()
-        print ("\n\n----------\n\nGenerating full response...")
+    gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
+    fullR.clear()
+    print ("\n\n----------\n")
 
 def ask_cohere(question):
     global cRes
     if question[0] == "@":  # Reasoning
-        response = co.chat(
+        response = co.chat_stream(
             model="command-a-reasoning-08-2025",
             messages=cMsg,
         )
-        for content in response.message.content:
-            if content.type == "text":
-                cRes = content.text
+        for event in response:
+            if event.type == "content-delta":
+                if event.delta.message.content.thinking:
+                    print(event.delta.message.content.thinking, end="")
+                if event.delta.message.content.text:
+                    chunk = event.delta.message.content.text
+                    print(event.delta.message.content.text, end="")
+                    cRes += chunk
     else:  # No reasoning
-        res = co.chat(
+        res = co.chat_stream(
             model="command-a-03-2025",
             messages=cMsg,
         )
-        cRes = res.message.content[0].text
+        for event in res:
+            if event:
+                if event.type == "content-delta":
+                    chunk = event.delta.message.content.text
+                    print(event.delta.message.content.text, end="")
+                    cRes += chunk
+    print ("\n\n----------\n\nGenerating full response...")
 
 def merge_responses(question):
     global gRes, cRes, mMsg, mRes
@@ -99,11 +107,19 @@ def merge_responses(question):
     mRes = response.text
 
 def generate_response(question):
+    '''
     t1 = threading.Thread(target=ask_gemini, args=(question,))
     t2 = threading.Thread(target=ask_cohere, args=(question,))
     t1.start()
     t2.start()
     t1.join()
+    t2.join()
+    '''
+    t1 = threading.Thread(target=ask_gemini, args=(question,))
+    t1.start()
+    t1.join()
+    t2 = threading.Thread(target=ask_cohere, args=(question,))
+    t2.start()
     t2.join()
     t3 = threading.Thread(target=merge_responses, args=(question,))
     t3.start()
