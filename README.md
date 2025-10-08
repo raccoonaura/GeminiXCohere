@@ -16,7 +16,9 @@
 - Gemini及Cohere的API Key
 
 ## 專案架構
-- src/: 程式碼
-- LICENSE: 程式碼
-- docs/: 文檔
 - README.md: 主入口說明
+- LICENSE: 授權
+- requirements.txt: 環境需求
+- main.py: 主程式
+- src/: 程式碼
+- docs/: 文檔
