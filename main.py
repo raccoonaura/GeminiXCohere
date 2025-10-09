@@ -1,13 +1,14 @@
 from src import response_handler
 from src import logging_handler
+from src import model_client
 from src import utils
 
 logging_handler.create_log_files()
 
 utils.clear_all()
-response_handler.initialize_gemini()
+model_client.initialize_gemini()
 utils.clear_all()
-response_handler.initialize_cohere()
+model_client.initialize_cohere()
 utils.clear_all()
 
 question = input("Hello! How can I assist you today? ")
