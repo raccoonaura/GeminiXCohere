@@ -1,6 +1,5 @@
-cohere_log.txt
-gemini_log.txt
-merged_log.txt
+cache/
+logs/
 .venv/
 env/
 venv/
