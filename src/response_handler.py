@@ -39,7 +39,9 @@ def handle_conversation(question):
         print ("You: ", question, "\n\n----------\n")
 
         model_client.memorize_question(question)
-        if (question[0] == "@"):
+        if (question[0] == "$"):  # Enable embedding
+            """WIP"""
+        elif (question[0] == "@"):  # Enable reasoning
             print ("Enabled reasoning! Please wait...\n\n----------\n")
         get_response(question)
 

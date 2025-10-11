@@ -1,7 +1,8 @@
-from google.genai import types
 from google.genai import Client
 from cohere import ClientV2
 from src import response_handler
+from src import generate_handler
+from src import reasoning_handler
 import time
 
 client = None  # Gemini client
@@ -47,127 +48,29 @@ def ask_gemini(question):
     global gMsg, gRes, fullR, gThought, gET, gSG, gEG
     gThought = False
     fullR.clear()
-    # gMsg.append({"role": "user", "parts": [{"text": "You will receive a question and an existing answer. Write a complementary response that adds new reasoning, details, or viewpoints not covered before. Do not restate or rephrase the previous answer. Only output the new answer itself.\n\nQuestion: " + question + "\n\nExisting answer: " + cRes}]})
-    try:  # Gemini 2.5 Pro
+    try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
         if question[0] == "@":  # Reasoning
-            response = client.models.generate_content_stream(
-                model="gemini-2.5-pro",
-                contents=gMsg,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                ),
-            )
-            for chunk in response:
-                if chunk.text is None:
-                    continue
-                else:
-                    if gThought is False:
-                        gThought = True
-                        gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                        gSG = time.perf_counter()
-                    print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                    fullR.append(chunk.text)
+            reasoning_handler.gp_think()
         else:  # No reasoning
-            response = client.models.generate_content_stream(
-                model="gemini-2.5-flash",  # Using Flash here to save time, as Pro cannot disable thinking
-                contents=gMsg,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                ),
-            )
-            for chunk in response:
-                if chunk.text is None:
-                    continue
-                else:
-                    if gThought is False:
-                        gThought = True
-                        gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                        gSG = time.perf_counter()
-                    print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                    fullR.append(chunk.text)
+            generate_handler.gf_generate()
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
             print ("Gemini 2.5 Pro is not available! Using Gemini 2.5 Flash\n")
             if question[0] == "@":  # Reasoning
-                response = client.models.generate_content_stream(
-                    model="gemini-2.5-flash",
-                    contents=gMsg,
-                    config=types.GenerateContentConfig(
-                        thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                    ),
-                )
-                for chunk in response:
-                    if chunk.text is None:
-                        continue
-                    else:
-                        if gThought is False:
-                            gThought = True
-                            gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                            gSG = time.perf_counter()
-                        print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                        fullR.append(chunk.text)
+                reasoning_handler.gf_think()
             else:  # No reasoning
-                response = client.models.generate_content_stream(
-                    model="gemini-2.5-flash",
-                    contents=gMsg,
-                    config=types.GenerateContentConfig(
-                        thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                    ),
-                )
-                for chunk in response:
-                    if chunk.text is None:
-                        continue
-                    else:
-                        if gThought is False:
-                            gThought = True
-                            gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                            gSG = time.perf_counter()
-                        print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                        fullR.append(chunk.text)
+                generate_handler.gf_generate()
         except:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
             try:
                 print ("Gemini 2.5 Flash is not available! Using Gemini 2.5 Flash Lite\n")
                 if question[0] == "@":  # Reasoning
-                    response = client.models.generate_content_stream(
-                        model="gemini-2.5-flash-lite",
-                        contents=gMsg,
-                        config=types.GenerateContentConfig(
-                            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                        ),
-                    )
-                    for chunk in response:
-                        if chunk.text is None:
-                            continue
-                        else:
-                            if gThought is False:
-                                gThought = True
-                                gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                                gSG = time.perf_counter()
-                            print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                            fullR.append(chunk.text)
+                    reasoning_handler.gfl_think()
                 else:  # No reasoning
-                    response = client.models.generate_content_stream(
-                        model="gemini-2.5-flash-lite",
-                        contents=gMsg,
-                        config=types.GenerateContentConfig(
-                            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                        ),
-                    )
-                    for chunk in response:
-                        if chunk.text is None:
-                            continue
-                        else:
-                            if gThought is False:
-                                gThought = True
-                                gET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                                gSG = time.perf_counter()
-                            print(chunk.text, end="")  # Real-time printing since the merged response can take a while
-                            fullR.append(chunk.text)
+                    generate_handler.gfl_generate()
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key無效或發生錯誤: ", e)
     gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
     gEG = f"{time.perf_counter() - gSG:.3f}"
-    # print ("\n\n----------\n")
     print ("\n\n----------\n")
 
 def ask_command(question):
@@ -175,84 +78,18 @@ def ask_command(question):
     cThought = False
     try:  # Command A
         if question[0] == "@":  # Reasoning
-            response = co.chat_stream(
-                model="command-a-reasoning-08-2025",
-                messages=cMsg,
-            )
-            for event in response:
-                if event.type == "content-delta":
-                    '''
-                    if event.delta.message.content.thinking:
-                        print(event.delta.message.content.thinking, end="")
-                    '''  # Thinking context, maybe I'll re-enable this in the future, but for now it's gonna look messy
-                    if event.delta.message.content.text:
-                        if cThought is False:
-                            cThought = True
-                            cET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                            cSG = time.perf_counter()
-                        chunk = event.delta.message.content.text
-                        # print(event.delta.message.content.text, end="")
-                        cRes += chunk
+            generate_handler.ca_think()
         else:  # No reasoning
-            res = co.chat_stream(
-                model="command-a-03-2025",
-                messages=cMsg,
-            )
-            for event in res:
-                if event:
-                    if event.type == "content-delta":
-                        if event.delta.message.content.text:
-                            if cThought is False:
-                                cThought = True
-                                cET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                                cSG = time.perf_counter()
-                            chunk = event.delta.message.content.text
-                            # print(event.delta.message.content.text, end="")
-                            cRes += chunk
-    except:  # Command R+, fallback if A is not available
+            generate_handler.ca_generate()
+    except:  # Command R+, fallback if A is not available, it doesn't support reasoning
         try:
-            # print ("Cohere Command A is not available! Using Command R+\n")
-            # if question[0] == "@":  # Reasoning
-            #     print ("Current model does not support reasoning!\n")
-            res = co.chat_stream(
-                model="command-r-plus-08-2024",
-                messages=cMsg,
-            )
-            for event in res:
-                if event:
-                    if event.type == "content-delta":
-                        if event.delta.message.content.text:
-                            if cThought is False:
-                                cThought = True
-                                cET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                                cSG = time.perf_counter()
-                            chunk = event.delta.message.content.text
-                            # print(event.delta.message.content.text, end="")
-                            cRes += chunk
-        except:  # Command R, fallback if R+ is not available, although you'll barely reach this point
+            generate_handler.crp_generate()
+        except:  # Command R, fallback if R+ is not available, although you'll barely reach this point, it doesn't support reasoning
             try:
-                # print ("Cohere Command R+ is not available! Using Command R\n")
-                # if question[0] == "@":  # Reasoning
-                #     print ("Current model does not support reasoning!\n")
-                res = co.chat_stream(
-                    model="command-r-08-2024",
-                    messages=cMsg,
-                )
-                for event in res:
-                    if event:
-                        if event.type == "content-delta":
-                            if event.delta.message.content.text:
-                                if cThought is False:
-                                    cThought = True
-                                    cET = f"{time.perf_counter() - response_handler.tS:.3f}"
-                                    cSG = time.perf_counter()
-                                chunk = event.delta.message.content.text
-                                # print(event.delta.message.content.text, end="")
-                                cRes += chunk
+                generate_handler.cr_generate()
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Cohere API Key無效或發生錯誤: ", e)
     cEG = f"{time.perf_counter() - cSG:.3f}"
-    # print ("\n\n----------\n\nGenerating full response...")
 
 def merge_responses(question):
     global gRes, cRes, mMsg, mRes, mET, mSG, mEG
@@ -269,61 +106,22 @@ def merge_responses(question):
     """
     # TODO: Find a better way to format this for Gemini
 
-    try:  # Gemini 2.5 Pro
+    try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
         if question[0] == "@":  # Reasoning
-            response = client.models.generate_content(
-                model="gemini-2.5-pro",
-                contents=mMsg,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                ),
-            )
+            response = reasoning_handler.gp_think_merge()
         else:  # No reasoning
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",  # Using Flash here to save time, as Pro cannot disable thinking
-                contents=mMsg,
-                config=types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                ),
-            )
+            response = generate_handler.gf_merge()
     except:  # Gemini 2.5 Flash, fallback if Pro is not available
         print("Gemini 2.5 Pro is not available! Using Gemini 2.5 Flash\n")
         try:
             if question[0] == "@":  # Reasoning
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=mMsg,
-                    config=types.GenerateContentConfig(
-                        thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                    ),
-                )
+                response = reasoning_handler.gf_think_merge()
             else:  # No reasoning
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=mMsg,
-                    config=types.GenerateContentConfig(
-                        thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                    ),
-                )
+                response = generate_handler.gf_merge()
         except:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
             print("Gemini 2.5 Flash is not available! Using Gemini 2.5 Flash Lite\n")
             try:
-                if question[0] == "@":  # Reasoning
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=mMsg,
-                        config=types.GenerateContentConfig(
-                            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
-                        ),
-                    )
-                else:  # No reasoning
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash-lite",
-                        contents=mMsg,
-                        config=types.GenerateContentConfig(
-                            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
-                        ),
-                    )
+                response = generate_handler.gfl_merge()
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key無效或發生錯誤: ", e)
     mET = f"{time.perf_counter() - response_handler.tS:.3f}"

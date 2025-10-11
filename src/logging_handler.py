@@ -9,7 +9,7 @@ def reset_logs():
     os.makedirs(LOGS_DIR)
     with open("logs/gemini_log.txt", "w", encoding="utf-8") as file:
         pass
-    with open("logs/command.txt", "w", encoding="utf-8") as file:
+    with open("logs/command_log.txt", "w", encoding="utf-8") as file:
         pass
     with open("logs/merged_log.txt", "w", encoding="utf-8") as file:
         pass
@@ -17,7 +17,7 @@ def reset_logs():
 def log_interaction(question, gRes, cRes, mRes):
     with open("logs/gemini_log.txt", "a", encoding="utf-8") as file:
         file.write("User:" + question + "\n\n" + "Model:" + gRes + "\n\n")
-    with open("logs/command.txt", "a", encoding="utf-8") as file:
+    with open("logs/command_log.txt", "a", encoding="utf-8") as file:
         file.write("User:" + question + "\n\n" + "Model:" + cRes + "\n\n")
     with open("logs/merged_log.txt", "a", encoding="utf-8") as file:
         file.write("User:" + question + "\n\n" + "Model:" + mRes + "\n\n")
