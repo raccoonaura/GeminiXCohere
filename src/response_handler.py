@@ -5,6 +5,7 @@ from src import model_client
 from src import utils
 import time
 tS = None  # Stands for thought start
+path = ""
 
 def get_response(question):
     cached = caching_handler.read_from_caches(question)
@@ -15,7 +16,7 @@ def get_response(question):
     generate_response(question)
     response = model_client.mRes
     utils.clear_all()
-    print ("You: ", question, "\n\n----------\n\n", model_client.mRes, "\n\n----------\n\nThought for", model_client.mET, "seconds in total, took", model_client.mEG, "seconds to merge the answers, generated", len(model_client.mRes), "tokens.\n\n----------\n")
+    print ("You: ", question, "\n\n----------\n\n", model_client.mRes, "\n\n----------\n\nThought for", model_client.mET, "seconds in total, took", model_client.mEG, "seconds to merge the answers, generated", len(model_client.mRes), "tokens.\nUsed model", model_client.gMd, "and", model_client.cMd, ", merged using", model_client.mMd, ".\n\n----------\n")
     caching_handler.write_to_caches(question, response)
     return response
 
@@ -30,17 +31,25 @@ def generate_response(question):
     t2.join()
     t3 = threading.Thread(target=model_client.merge_responses, args=(question,))
     t3.start()
-    print("Gemini thought for", model_client.gET, "seconds, took", model_client.gEG, "seconds to generate the answer, generated", len(model_client.gRes), "tokens.\nCommand thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens.\n\n----------\n\nGenerating full response...")
+    print("Gemini thought for", model_client.gET, "seconds, took", model_client.gEG, "seconds to generate the answer, generated", len(model_client.gRes), "tokens, using model", model_client.gMd, ".")
+    if question[0] == "$":  # Embedding
+        print("Embed thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens, using model", model_client.cMd, ".\n\n----------\n\nGenerating full response...")
+    else:
+        print("Command thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens, using model", model_client.cMd, ".\n\n----------\n\nGenerating full response...")
     t3.join()
 
 def handle_conversation(question):
+    global path
     try:
         utils.clear_all()
         print ("You: ", question, "\n\n----------\n")
 
         model_client.memorize_question(question)
         if (question[0] == "$"):  # Enable embedding
-            """WIP"""
+            path = input("Enabled embedding! Please enter the file path: ")
+            while path.strip() == "":
+                utils.clear_screen()
+                path = input("Enabled embedding! Please enter the file path: ")
         elif (question[0] == "@"):  # Enable reasoning
             print ("Enabled reasoning! Please wait...\n\n----------\n")
         get_response(question)

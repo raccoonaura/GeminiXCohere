@@ -62,7 +62,7 @@ def gfl_think():
 
 def ca_think():
     res = model_client.co.chat_stream(
-        model="command-a-reasoning-03-2025",
+        model="command-a-reasoning-08-2025",
         messages=model_client.cMsg,
         thinking=[{"type": "enabled"}],
     )
