@@ -2,10 +2,12 @@ import threading
 from src import logging_handler
 from src import caching_handler
 from src import model_client
+from src import embedding_handler
 from src import utils
 import time
-tS = None  # Stands for thought start
-path = ""
+import os
+tS = None  # Stands for Thought Start
+fN = ""  # Stands for File Name
 
 def get_response(question):
     cached = caching_handler.read_from_caches(question)
@@ -13,6 +15,8 @@ def get_response(question):
         utils.clear_all()
         print ("You: ", question, "\n\n----------\n\n", cached, "\n\n----------\n\nDetected similar question in cache (match: {:.1f}%)\n\n----------\n".format(caching_handler.match))
         return cached
+    if (question[0] == "$"):  # will never reach here (for now), see line 65
+        model_client.embedding(question)
     generate_response(question)
     response = model_client.mRes
     utils.clear_all()
@@ -39,17 +43,26 @@ def generate_response(question):
     t3.join()
 
 def handle_conversation(question):
-    global path
+    global fN
     try:
         utils.clear_all()
         print ("You: ", question, "\n\n----------\n")
 
         model_client.memorize_question(question)
         if (question[0] == "$"):  # Enable embedding
-            path = input("Enabled embedding! Please enter the file path: ")
-            while path.strip() == "":
-                utils.clear_screen()
-                path = input("Enabled embedding! Please enter the file path: ")
+            utils.set_marker()
+            fN = input("Enabled embedding! Please enter the file name: ")
+            while not os.path.exists("embeds/" + fN) or fN.strip() == "":
+                if fN.strip() != "" and not fN.lower().endswith(".txt"):
+                    fN += ".txt"
+                else:
+                    utils.clear_screen()
+                    if fN.strip() == "":
+                        fN = input("Please re-enter the file name: ")
+                    else:
+                        print(fN + " does not exist!")
+                        fN = input("Please re-enter the file name: ")
+            embedding_handler.ge_embed(question)
         elif (question[0] == "@"):  # Enable reasoning
             print ("Enabled reasoning! Please wait...\n\n----------\n")
         get_response(question)

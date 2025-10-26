@@ -48,16 +48,31 @@ def memorize_response():
     gMsg.append({"role": "model", "parts": [{"text": mRes}]})
     cMsg.append({"role": "assistant", "content": mRes})
 
+def embedding(question):
+    try:
+        question = question[1:]
+        embedding_handler.ge_embed(question)
+    except:
+        try:
+            question = question[1:]
+            embedding_handler.e4_embed()
+        except:
+            try:
+                question = question[1:]
+                embedding_handler.e3_embed()
+            except:
+                try:
+                    question = question[1:]
+                    embedding_handler.el3_embed()
+                except Exception as e:  # Erm... you are probably doing something wrong!
+                    print("Embed API Key無效或發生錯誤: ", e)
+
 def ask_gemini(question):
     global gMsg, gRes, fullR, gThought, gET, gSG, gEG, gMd
     gThought = False
     fullR.clear()
-    try:  # Gemini 2.5 Pro / Gemini Embedding 001, it doesn't support NO reasoning
-        if question[0] == "$":  # Embedding
-            gMd = "Gemini Embedding 001"
-            question = question[1:]
-            embedding_handler.ge_embed()
-        elif question[0] == "@":  # Reasoning
+    try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
+        if question[0] == "@":  # Reasoning
             gMd = "Gemini 2.5 Pro"
             question = question[1:]
             reasoning_handler.gp_think()
@@ -66,9 +81,7 @@ def ask_gemini(question):
             generate_handler.gf_generate()
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            if question[0] == "$":  # Embedding
-                print("ERROR!")
-            elif question[0] == "@":  # Reasoning
+            if question[0] == "@":  # Reasoning
                 gMd = "Gemini 2.5 Flash"
                 question = question[1:]
                 reasoning_handler.gf_think()
@@ -77,10 +90,7 @@ def ask_gemini(question):
                 generate_handler.gf_generate()
         except:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
             try:
-                if question[0] == "$":  # Embedding
-                    question = question[1:]
-                    print("ERROR!")
-                elif question[0] == "@":  # Reasoning
+                if question[0] == "@":  # Reasoning
                     gMd = "Gemini 2.5 Flash Lite"
                     question = question[1:]
                     reasoning_handler.gfl_think()
@@ -96,36 +106,23 @@ def ask_gemini(question):
 def ask_command(question):
     global cMsg, cRes, cThought, cET, cSG, cEG, cMd
     cThought = False
-    try:  # Command A / Embed v4.0
-        if question[0] == "$":  # Embedding
-            cMd = "Embed v4.0"
-            question = question[1:]
-            embedding_handler.e4_embed()
-        elif question[0] == "@":  # Reasoning
+    try:  # Command A
+        if question[0] == "@":  # Reasoning
             cMd = "Command A"
             question = question[1:]
             reasoning_handler.ca_think()
         else:  # No reasoning
             cMd = "Command A"
             generate_handler.ca_generate()
-    except:  # Command R+ / Embed v3.0, fallback if A / v4.0 is not available, it doesn't support reasoning
+    except:  # Command R+, fallback if A is not available, it doesn't support reasoning
         try:
-            if question[0] == "$":  # Embedding
-                cMd = "Embed v3.0"
-                question = question[1:]
-                embedding_handler.e3_embed()
-            else:
-                cMd = "Command R+"
-                generate_handler.crp_generate()
-        except:  # Command R / Embed light v3.0, fallback if R+ / v3.0 is not available, although you'll barely reach this point, R doesn't support reasoning
+            cMd = "Command R+"
+            question = question[1:]
+            generate_handler.crp_generate()
+        except:  # Command R, fallback if R+ is not available, although you'll barely reach this point, R doesn't support reasoning
             try:
-                if question[0] == "$":  # Embedding
-                    cMd = "Embed light v3.0"
-                    question = question[1:]
-                    embedding_handler.el3_embed()
-                else:
-                    cMd = "Command R"
-                    generate_handler.cr_generate()
+                cMd = "Command R"
+                generate_handler.cr_generate()
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Cohere API Key無效或發生錯誤: ", e)
     cEG = f"{time.perf_counter() - cSG:.3f}"
@@ -146,11 +143,7 @@ def merge_responses(question):
     # TODO: Find a better way to format this for Gemini
 
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
-        if question[0] == "$":  # Embedding
-            mMd = "Gemini Embedding 001"
-            question = question[1:]
-            embedding_handler.ge_embed_merge()
-        elif question[0] == "@":  # Reasoning
+        if question[0] == "@":  # Reasoning
             mMd = "Gemini 2.5 Pro"
             question = question[1:]
             response = reasoning_handler.gp_think_merge()
@@ -159,10 +152,7 @@ def merge_responses(question):
             response = generate_handler.gf_merge()
     except:  # Gemini 2.5 Flash, fallback if Pro is not available
         try:
-            if question[0] == "$":  # Embedding
-                question = question[1:]
-                print("ERROR!")
-            elif question[0] == "@":  # Reasoning
+            if question[0] == "@":  # Reasoning
                 mMd = "Gemini 2.5 Flash"
                 question = question[1:]
                 response = reasoning_handler.gf_think_merge()
@@ -171,10 +161,7 @@ def merge_responses(question):
                 response = generate_handler.gf_merge()
         except:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
             try:
-                if question[0] == "$":  # Embedding
-                    question = question[1:]
-                    print("ERROR!")
-                elif question[0] == "@":  # Reasoning
+                if question[0] == "@":  # Reasoning
                     mMd = "Gemini 2.5 Flash Lite"
                     question = question[1:]
                     response = reasoning_handler.gfl_think_merge()
