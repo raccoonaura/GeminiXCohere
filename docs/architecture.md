@@ -14,11 +14,11 @@
 - 無 → 不開啟思考功能 生成較快且節省token
 ## Key 輸入機制
 - 使用者在本地輸入, 不會以任何形式儲存
-### *以下內容正在計畫 (WIP)*
-## RAG 流程
-1. 檔案讀取
-2. Embedding生成 (?)
-3. Top-k檢索 (?)
-4. 將檢索結果插入prompt
 ## 並行呼叫
 - loading, fallback
+## RAG 流程
+1. 檔案讀取
+2. 文件切塊
+3. Embedding生成
+4. Top-k檢索
+5. 將檢索結果插入prompt

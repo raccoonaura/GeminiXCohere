@@ -8,7 +8,8 @@ def gp_think():
         model="gemini-2.5-pro",
         contents=model_client.gMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     for chunk in response:
@@ -27,7 +28,8 @@ def gf_think():
         model="gemini-2.5-flash",
         contents=model_client.gMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     for chunk in response:
@@ -46,7 +48,8 @@ def gfl_think():
         model="gemini-2.5-flash-lite",
         contents=model_client.gMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     for chunk in response:
@@ -63,12 +66,14 @@ def gfl_think():
 def ca_think():
     res = model_client.co.chat_stream(
         model="command-a-reasoning-08-2025",
-        messages=model_client.cMsg,
-        thinking=[{"type": "enabled"}],
+        messages=model_client.cMsg + [{"role": "system", "content": response_handler.context}],
+        thinking={"type": "enabled"},
     )
     for event in res:
         if event.type == "content-delta":
-            if event.delta.message.content.text:
+            if event.delta.message.content.thinking:
+                pass
+            elif event.delta.message.content.text:
                 if model_client.cThought is False:
                     model_client.cThought = True
                     model_client.cET = f"{time.perf_counter() - response_handler.tS:.3f}"
@@ -82,7 +87,8 @@ def gp_think_merge():
         model="gemini-2.5-pro",
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     return response
@@ -92,7 +98,8 @@ def gf_think_merge():
         model="gemini-2.5-flash",
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     return response
@@ -102,7 +109,8 @@ def gfl_think_merge():
         model="gemini-2.5-flash-lite",
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=-1)  # Dynamic thinking, token usage depends on the complexity of the question
+            thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
+            system_instruction=response_handler.context
         ),
     )
     return response

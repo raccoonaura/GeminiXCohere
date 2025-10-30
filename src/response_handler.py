@@ -2,21 +2,23 @@ import threading
 from src import logging_handler
 from src import caching_handler
 from src import model_client
-from src import embedding_handler
 from src import utils
 import time
 import os
 tS = None  # Stands for Thought Start
 fN = ""  # Stands for File Name
+context = ""
 
 def get_response(question):
+    global context
     cached = caching_handler.read_from_caches(question)
     if cached:
         utils.clear_all()
         print ("You: ", question, "\n\n----------\n\n", cached, "\n\n----------\n\nDetected similar question in cache (match: {:.1f}%)\n\n----------\n".format(caching_handler.match))
         return cached
-    if (question[0] == "$"):  # will never reach here (for now), see line 65
-        model_client.embedding(question)
+    elif question[0] == "$":
+        context = model_client.embedding(question)
+    else: context = "You are a helpful assistant."
     generate_response(question)
     response = model_client.mRes
     utils.clear_all()
@@ -36,7 +38,7 @@ def generate_response(question):
     t3 = threading.Thread(target=model_client.merge_responses, args=(question,))
     t3.start()
     print("Gemini thought for", model_client.gET, "seconds, took", model_client.gEG, "seconds to generate the answer, generated", len(model_client.gRes), "tokens, using model", model_client.gMd, ".")
-    if question[0] == "$":  # Embedding
+    if question[0] == "$":  # RAG
         print("Embed thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens, using model", model_client.cMd, ".\n\n----------\n\nGenerating full response...")
     else:
         print("Command thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens, using model", model_client.cMd, ".\n\n----------\n\nGenerating full response...")
@@ -49,9 +51,9 @@ def handle_conversation(question):
         print ("You: ", question, "\n\n----------\n")
 
         model_client.memorize_question(question)
-        if (question[0] == "$"):  # Enable embedding
+        if question[0] == "$":  # Enable RAG
             utils.set_marker()
-            fN = input("Enabled embedding! Please enter the file name: ")
+            fN = input("Enabled Retrieval-Augmented Generation!\nPlease enter the file name: ")
             while not os.path.exists("embeds/" + fN) or fN.strip() == "":
                 if fN.strip() != "" and not fN.lower().endswith(".txt"):
                     fN += ".txt"
@@ -62,8 +64,9 @@ def handle_conversation(question):
                     else:
                         print(fN + " does not exist!")
                         fN = input("Please re-enter the file name: ")
-            embedding_handler.ge_embed(question)
-        elif (question[0] == "@"):  # Enable reasoning
+            if question[1] == "@":  # Enable reasoning
+                print ("\n----------\n\nEnabled reasoning! Please wait...\n\n----------\n")
+        if question[0] == "@":  # Enable reasoning
             print ("Enabled reasoning! Please wait...\n\n----------\n")
         get_response(question)
 
@@ -74,4 +77,4 @@ def handle_conversation(question):
         utils.set_marker()
 
     except Exception as e:
-        print("API Key無效或發生錯誤: ", e)
+        print("API Key invalid / An error occurred: ", e)

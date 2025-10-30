@@ -15,6 +15,8 @@ def reset_logs():
         pass
 
 def log_interaction(question, gRes, cRes, mRes):
+    if question[0] == "$":  # Reasoning
+        question = question[1:]
     if question[0] == "@":  # Reasoning
         question = question[1:]
     with open("logs/gemini_log.txt", "a", encoding="utf-8") as file:

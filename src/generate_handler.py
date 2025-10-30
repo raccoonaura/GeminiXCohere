@@ -8,7 +8,8 @@ def gf_generate():
         model="gemini-2.5-flash",  # Using Flash here to save time, as Pro cannot disable thinking
         contents=model_client.gMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
+            system_instruction=response_handler.context
         ),
     )
     for chunk in response:
@@ -27,7 +28,8 @@ def gfl_generate():
         model="gemini-2.5-flash-lite",
         contents=model_client.gMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
+            system_instruction=response_handler.context
         ),
     )
     for chunk in response:
@@ -44,7 +46,7 @@ def gfl_generate():
 def ca_generate():
     res = model_client.co.chat_stream(
         model="command-a-03-2025",
-        messages=model_client.cMsg,
+        messages=model_client.cMsg + [{"role": "system", "content": response_handler.context}],
     )
     for event in res:
         if event:
@@ -61,7 +63,7 @@ def ca_generate():
 def crp_generate():
     res = model_client.co.chat_stream(
         model="command-r-plus-08-2024",
-           messages=model_client.cMsg,
+           messages=model_client.cMsg + [{"role": "system", "content": response_handler.context}],
     )
     for event in res:
         if event:
@@ -78,7 +80,7 @@ def crp_generate():
 def cr_generate():
     res = model_client.co.chat_stream(
         model="command-r-08-2024",
-           messages=model_client.cMsg,
+           messages=model_client.cMsg + [{"role": "system", "content": response_handler.context}],
     )
     for event in res:
         if event:
@@ -97,7 +99,8 @@ def gf_merge():
         model="gemini-2.5-flash",
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
+            system_instruction=response_handler.context
         ),
     )
     return response
@@ -107,7 +110,8 @@ def gfl_merge():
         model="gemini-2.5-flash-lite",
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
-            thinking_config=types.ThinkingConfig(thinking_budget=0)  # Disables thinking, for token efficiency, as it's enabled by default
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
+            system_instruction=response_handler.context
         ),
     )
     return response
