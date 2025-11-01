@@ -4,6 +4,7 @@ from src import response_handler
 from src import generate_handler
 from src import reasoning_handler
 from src import embedding_handler
+from src import utils
 import time
 
 client = None  # Gemini client
@@ -34,11 +35,27 @@ mMd = ""  # Stands for Merged Model
 
 def initialize_gemini():
     global client
-    client = Client(api_key=input("Enter Gemini API Key: ").strip())
+    while not client:
+        utils.clear_all()
+        try:
+            key = input("Enter Gemini API Key: ").strip()
+            if key == "":  # empty input check
+                continue
+            else:
+                client = Client(api_key=key)
+        except: client = None  # KeyboardInterrupt check
 
 def initialize_cohere():
     global co
-    co = ClientV2(api_key=input("Enter Cohere API Key: ").strip())
+    while not co:
+        utils.clear_all()
+        try:
+            key = input("Enter Cohere API Key: ").strip()
+            if key == "":  # empty input check
+                continue
+            else:
+                co = ClientV2(api_key=key)
+        except: co = None  # KeyboardInterrupt check
 
 def memorize_question(question):
     gMsg.append({"role": "user", "parts": [{"text": question}]})
@@ -105,11 +122,12 @@ def ask_gemini(question):
                 print("Gemini API Key invalid / An error occurred: ", e)
     gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
     gEG = f"{time.perf_counter() - gSG:.3f}"
-    print ("\n\n----------\n")
+    print ("\n\n-------------------------\n")
 
 def ask_command(question):
     global cMsg, cRes, cThought, cET, cSG, cEG, cMd
     cThought = False
+    cRes = ""
     try:  # Command A
         if question[0] == "$": question = question[1:]  # RAG
         if question[0] == "@":  # Reasoning
@@ -138,17 +156,7 @@ def ask_command(question):
 def merge_responses(question):
     global gRes, cRes, mMsg, mRes, mET, mSG, mEG, mMd
     mSG = time.perf_counter()
-    mMsg = {"role": "user", "parts": [{"text": "You are given two responses to the same question. Merge them into a single, comprehensive answer that preserves most of the unique and valuable content from both. Expand upon the topic by adding relevant insights or perspectives the original responses may have missed. Output only the final merged answer without any explanations, notes, or meta commentary.\n\nQuestion: " + question + "\n\nResponse 1: " + gRes + "\n\nResponse 2: " + cRes}]}
-
-    # Easier to read version
-    """
-    You are given two responses to the same question.
-    Merge them into a single, comprehensive answer that preserves most of the unique and valuable content from both.
-    Expand upon the topic by adding relevant insights or perspectives the original responses may have missed.
-    Output only the final merged answer without any explanations, notes, or meta commentary.
-    \n\nQuestion: " + question + "\n\nResponse 1: " + gRes + "\n\nResponse 2: " + cRes
-    """
-    # TODO: Find a better way to format this for Gemini
+    mMsg = [{"role": "user", "parts": [{"text": question}]}]
 
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
         if question[0] == "$": question = question[1:]  # RAG

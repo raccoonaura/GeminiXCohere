@@ -1,9 +1,73 @@
 from src import response_handler
+from src import utils
 import os
 import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
+
+def get_file():
+
+    files = os.listdir("embeds")
+    files = [f for f in files if not f.startswith('.') and os.path.isfile(os.path.join("embeds", f))]
+    if not files:
+        print(f"Error! There's no file in the embeds folder!")
+        return None
+
+    files = [f for f in files 
+            if os.path.isfile(os.path.join("embeds", f)) 
+            and any(f.endswith(ext) for ext in [".txt", ".md"])]
+    """
+    planned file types to support:
+
+    General text files: txt, md, rtf
+    General document files: pdf
+    ODF text files: odt, ott
+    ODF presentation files: odp, otp
+    Word files: docx, dotx,
+    Macro Word files: docm, dotm
+    Legacy Word files: doc, dot
+    PowerPoint files: pptx, ppsx, potx
+    Macro PowerPoint files: pptm, potm, ppsm
+    Legacy PowerPoint files: ppt, pps, pot
+    Excel files: xlsx, xltx
+    Macro Excel files: xlsm, xltm
+    Legacy Excel files: xls, xlt
+    Tabular data files: csv, tsv
+    Structured data files: json, xml, yaml
+    Web content files: html
+    E-books files: epub
+
+    probably will use tools like pandoc and libreoffice
+    """
+    if not files:
+        print(f"Error! None of the files in the embeds folder are supported!")
+        return None
+
+    print("Available files:\n")
+    for i, filename in enumerate(files, 1):
+        print(f"└ {i}. {filename}")
+
+    utils.set_marker()
+
+    while True:
+        try:
+            choice = input(f"\nPlease select the desired file (1~{len(files)}): ").strip()
+            choice = int(choice)
+            
+            if 1 <= choice <= len(files):
+                selected = files[choice - 1]
+                print(f"\nSelected: {selected}")
+                return selected
+            else:
+                utils.clear_screen()
+        
+        except ValueError:
+            utils.clear_screen()
+            continue
+        except KeyboardInterrupt:
+            utils.clear_screen()
+            continue
 
 def load_text_file(path):
     with open(path, "r", encoding="utf-8") as f:

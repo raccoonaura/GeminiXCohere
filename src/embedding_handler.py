@@ -33,7 +33,7 @@ def ge_embed(question):  # gemini-embedding-001
         context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
 
     context = "\n\n".join(context_parts)
-    context = "Answer based on the following context:\n\n" + context
+    context = "Reference materials and contexts:\n\n" + context
     return context
 
 """

@@ -4,24 +4,25 @@ from src import caching_handler
 from src import model_client
 from src import utils
 
+question = ""
+
 if __name__ == "__main__":
     logging_handler.reset_logs()
     caching_handler.reset_caches()
 
-utils.clear_all()
 model_client.initialize_gemini()
-utils.clear_all()
 model_client.initialize_cohere()
-utils.clear_all()
 
-question = input("Hello! How can I assist you today? ")
 while question.strip() == "":
     utils.clear_all()
-    question = input("Hello! How can I assist you today? ")
+    try: question = input("Hello! How can I assist you today? ")
+    except: continue
 
 while True:
     response_handler.handle_conversation(question)
-    question = input("Your turn: ")
+    question = ""
+    utils.set_marker()
     while question.strip() == "":
         utils.clear_screen()
-        question = input("Your turn: ")
+        try: question = input("Your turn: ")
+        except: continue

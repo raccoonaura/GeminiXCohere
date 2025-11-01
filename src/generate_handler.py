@@ -57,7 +57,7 @@ def ca_generate():
                         model_client.cET = f"{time.perf_counter() - response_handler.tS:.3f}"
                         model_client.cSG = time.perf_counter()
                     chunk = event.delta.message.content.text
-                    # print(event.delta.message.content.text, end="")
+                    # print(event.delta.message.content.text, end="")  # Real-time printing since the merged response can take a while
                     model_client.cRes += chunk
 
 def crp_generate():
@@ -74,7 +74,7 @@ def crp_generate():
                         model_client.cET = f"{time.perf_counter() - response_handler.tS:.3f}"
                         model_client.cSG = time.perf_counter()
                     chunk = event.delta.message.content.text
-                    # print(event.delta.message.content.text, end="")
+                    # print(event.delta.message.content.text, end="")  # Real-time printing since the merged response can take a while
                     model_client.cRes += chunk
 
 def cr_generate():
@@ -91,7 +91,7 @@ def cr_generate():
                         model_client.cET = f"{time.perf_counter() - response_handler.tS:.3f}"
                         model_client.cSG = time.perf_counter()
                     chunk = event.delta.message.content.text
-                    # print(event.delta.message.content.text, end="")
+                    # print(event.delta.message.content.text, end="")  # Real-time printing since the merged response can take a while
                     model_client.cRes += chunk
 
 def gf_merge():
@@ -100,7 +100,7 @@ def gf_merge():
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
-            system_instruction=response_handler.context
+            system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer.\n\nResponse 1: \n\n" + model_client.gRes + "\n\nResponse 2: \n\n" + model_client.cRes + "\n\n" + response_handler.context
         ),
     )
     return response
@@ -111,7 +111,7 @@ def gfl_merge():
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0),  # Disables thinking, for token efficiency, as it's enabled by default
-            system_instruction=response_handler.context
+            system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer.\n\nResponse 1: \n\n" + model_client.gRes + "\n\nResponse 2: \n\n" + model_client.cRes + "\n\n" + response_handler.context
         ),
     )
     return response

@@ -88,7 +88,7 @@ def gp_think_merge():
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
-            system_instruction=response_handler.context
+            system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer.\n\nResponse 1: \n\n" + model_client.gRes + "\n\nResponse 2: \n\n" + model_client.cRes + "\n\n" + response_handler.context
         ),
     )
     return response
@@ -99,7 +99,7 @@ def gf_think_merge():
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
-            system_instruction=response_handler.context
+            system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer. No introductions or meta-commentary.\n\nResponse 1: \n\n" + model_client.gRes + "\n\nResponse 2: \n\n" + model_client.cRes + "\n\n" + response_handler.context
         ),
     )
     return response
@@ -110,7 +110,7 @@ def gfl_think_merge():
         contents=model_client.mMsg,
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=-1),  # Dynamic thinking, token usage depends on the complexity of the question
-            system_instruction=response_handler.context
+            system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer. No introductions or meta-commentary.\n\nResponse 1: \n\n" + model_client.gRes + "\n\nResponse 2: \n\n" + model_client.cRes + "\n\n" + response_handler.context
         ),
     )
     return response
