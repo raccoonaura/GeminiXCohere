@@ -2,7 +2,6 @@ from google.genai import Client
 from cohere import ClientV2
 from src import response_handler
 from src import generate_handler
-from src import reasoning_handler
 from src import embedding_handler
 from src import utils
 import time
@@ -90,34 +89,32 @@ def ask_gemini(question):
     gThought = False
     fullR.clear()
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
-        if question[0] == "$": question = question[1:]  # RAG
+        if question[0] == "$": question = question[1:]  # File reading
         if question[0] == "@":  # Reasoning
             gMd = "Gemini 2.5 Pro"
             question = question[1:]
-            reasoning_handler.gp_think()
+            generate_handler.gemini_generate("gemini-2.5-pro", -1)
         else:  # No reasoning
             gMd = "Gemini 2.5 Flash"
-            generate_handler.gf_generate()
+            generate_handler.gemini_generate("gemini-2.5-flash", 0)
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            if question[0] == "$": question = question[1:]  # RAG
+            gMd = "Gemini 2.5 Flash"
+            if question[0] == "$": question = question[1:]  # File reading
             if question[0] == "@":  # Reasoning
-                gMd = "Gemini 2.5 Flash"
                 question = question[1:]
-                reasoning_handler.gf_think()
-                gMd = "Gemini 2.5 Flash"
+                generate_handler.gemini_generate("gemini-2.5-flash", -1)
             else:  # No reasoning
-                generate_handler.gf_generate()
+                generate_handler.gemini_generate("gemini-2.5-flash", 0)
         except:
             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
-                if question[0] == "$": question = question[1:]  # RAG
+                gMd = "Gemini 2.5 Flash Lite"
+                if question[0] == "$": question = question[1:]  # File reading
                 if question[0] == "@":  # Reasoning
-                    gMd = "Gemini 2.5 Flash Lite"
                     question = question[1:]
-                    reasoning_handler.gfl_think()
+                    generate_handler.gemini_generate("gemini-2.5-flash-lite", -1)
                 else:  # No reasoning
-                    gMd = "Gemini 2.5 Flash Lite"
-                    generate_handler.gfl_generate()
+                    generate_handler.gemini_generate("gemini-2.5-flash-lite", 0)
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key invalid / An error occurred: ", e)
     gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
@@ -129,26 +126,25 @@ def ask_command(question):
     cThought = False
     cRes = ""
     try:  # Command A
-        if question[0] == "$": question = question[1:]  # RAG
+        cMd = "Command A"
+        if question[0] == "$": question = question[1:]  # File reading
         if question[0] == "@":  # Reasoning
-            cMd = "Command A"
             question = question[1:]
-            reasoning_handler.ca_think()
+            generate_handler.command_generate("command-a-reasoning-08-2025", "enabled")
         else:  # No reasoning
-            cMd = "Command A"
-            generate_handler.ca_generate()
+            generate_handler.command_generate("command-a-03-2025", "disabled")
     except Exception as e:
         print(e)
         try:  # Command R+, fallback if A is not available, it doesn't support reasoning
-            if question[0] == "$": question = question[1:]  # RAG
             cMd = "Command R+"
+            if question[0] == "$": question = question[1:]  # File reading
             question = question[1:]
-            generate_handler.crp_generate()
+            generate_handler.command_generate("command-r-plus-08-2024", "disabled")
         except:
             try:  # Command R, fallback if R+ is not available, although you'll barely reach this point, R doesn't support reasoning
-                if question[0] == "$": question = question[1:]  # RAG
                 cMd = "Command R"
-                generate_handler.cr_generate()
+                if question[0] == "$": question = question[1:]  # File reading
+                generate_handler.command_generate("command-r-08-2024", "disabled")
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Cohere API Key invalid / An error occurred: ", e)
     cEG = f"{time.perf_counter() - cSG:.3f}"
@@ -159,34 +155,34 @@ def merge_responses(question):
     mMsg = [{"role": "user", "parts": [{"text": question}]}]
 
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
-        if question[0] == "$": question = question[1:]  # RAG
+        if question[0] == "$": question = question[1:]  # File reading
         if question[0] == "@":  # Reasoning
             mMd = "Gemini 2.5 Pro"
             question = question[1:]
-            response = reasoning_handler.gp_think_merge()
+            response = generate_handler.gemini_merge("gemini-2.5-pro", -1)
         else:  # No reasoning
             mMd = "Gemini 2.5 Flash"
-            response = generate_handler.gf_merge()
+            response = generate_handler.gemini_merge("gemini-2.5-flash", 0)
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            if question[0] == "$": question = question[1:]  # RAG
+            if question[0] == "$": question = question[1:]  # File reading
             if question[0] == "@":  # Reasoning
                 mMd = "Gemini 2.5 Flash"
                 question = question[1:]
-                response = reasoning_handler.gf_think_merge()
+                response = generate_handler.gemini_merge("gemini-2.5-flash", -1)
             else:  # No reasoning
                 mMd = "Gemini 2.5 Flash"
-                response = generate_handler.gf_merge()
+                response = generate_handler.gemini_merge("gemini-2.5-flash", 0)
         except:
             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
-                if question[0] == "$": question = question[1:]  # RAG
+                if question[0] == "$": question = question[1:]  # File reading
                 if question[0] == "@":  # Reasoning
                     mMd = "Gemini 2.5 Flash Lite"
                     question = question[1:]
-                    response = reasoning_handler.gfl_think_merge()
+                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", -1)
                 else:  # No reasoning
                     mMd = "Gemini 2.5 Flash Lite"
-                    response = generate_handler.gfl_merge()
+                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", 0)
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key invalid / An error occurred: ", e)
     mET = f"{time.perf_counter() - response_handler.tS:.3f}"

@@ -1,3 +1,4 @@
+from google.genai import types
 from src import response_handler
 from src import utils
 import os
@@ -5,6 +6,7 @@ import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
+image = None
 
 def get_file():
 
@@ -16,7 +18,7 @@ def get_file():
 
     files = [f for f in files 
             if os.path.isfile(os.path.join("embeds", f)) 
-            and any(f.endswith(ext) for ext in [".txt", ".md"])]
+            and any(f.endswith(ext) for ext in [".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"])]
     """
     planned file types to support:
 
@@ -33,12 +35,10 @@ def get_file():
     Excel files: xlsx, xltx
     Macro Excel files: xlsm, xltm
     Legacy Excel files: xls, xlt
+    E-books files: epub
     Tabular data files: csv, tsv
     Structured data files: json, xml, yaml
     Web content files: html
-    E-books files: epub
-
-    probably will use tools like pandoc and libreoffice
     """
     if not files:
         print(f"Error! None of the files in the embeds folder are supported!")
@@ -68,6 +68,55 @@ def get_file():
         except KeyboardInterrupt:
             utils.clear_screen()
             continue
+
+def check_for_image(file):
+    global image
+    name, ext = os.path.splitext(file)
+    if ext.lower() == ".png":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/png"
+        )
+        return True
+    elif ext.lower() == ".jpg":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/jpeg"
+        )
+        return True
+    elif ext.lower() == ".jpeg":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/jpeg"
+        )
+        return True
+    elif ext.lower() == ".webp":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/webp"
+        )
+        return True
+    elif ext.lower() == ".heic":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/heic"
+        )
+        return True
+    elif ext.lower() == ".heif":
+        with open('embeds/' + file, 'rb') as f:
+            image_bytes = f.read()
+        image = types.Part.from_bytes(
+            data=image_bytes, mime_type="image/heif"
+        )
+        return True
+    else:
+        image = None
+        return False
 
 def load_text_file(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -138,51 +187,3 @@ def chunk_by_sentence(max_length, overlap):  # 我決定把每一句留下中文
         chunks.append(" ".join(current_chunk))  # 保存跑完全部後的最後一個current_chunk
 
     return chunks
-
-"""  # doesn't work when the tail is longer than max_length
-            if len(current_chunk) > overlap:  # 如果現在的current_chunk包含的句數比overlap所保留的句數還多的時候 (通常是這樣)
-                tail = current_chunk[-overlap:]  # 從尾部取出overlap所保留的句數, 保留起來
-            else:  # 如果現在的current_chunk包含的句數跟overlap所保留的句數一樣多或更少的時候
-                tail = current_chunk  # 把整段current_chunk全部保留下來
-
-            current_chunk = tail  # 全新的current_chunk加入overlap的部分
-            current_length = sum(len(s) for s in current_chunk)  # 算字數
-            # 不用換句 直接繼續check新的current_chunk就好
-"""
-
-"""  # doesn't work, i don't really remember why though
-    for sentence in sentences:
-
-        if len(current_chunk.strip()) + len(sentence) <= max_length and not sentence.lstrip().startswith("#"):
-            current_chunk = add_current_line(current_chunk,sentence)
-
-        else:
-            if sentence.lstrip().startswith("#"):
-                if current_chunk:
-                    chunks.append(" ".join(current_chunk))
-                current_chunk = sentence + "\n"
-
-            else:
-                if current_chunk:
-                    chunks.append(" ".join(current_chunk))
-                tail = current_chunk[-overlap:]
-                current_chunk = tail + sentence + "\n"
-
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
-"""
-
-"""  # not necessary anymore
-from src import embedding_handler
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-
-def retrieve_relevant_chunks(question, top_k):
-    similarities = []
-    for item in embedding_handler.vector_store:
-        score = cosine_similarity(question, item["vector"])
-        similarities.append((score, item["chunk"]))
-
-    similarities.sort(reverse=True, key=lambda x: x[0])
-    return similarities[:top_k]
-"""

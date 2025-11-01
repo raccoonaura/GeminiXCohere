@@ -1,25 +1,20 @@
-import threading
 from src import logging_handler
 from src import caching_handler
 from src import file_handler
 from src import model_client
 from src import utils
+import threading
 import time
-import os
 tS = None  # Stands for Thought Start
 fN = ""  # Stands for File Name
 context = ""
 
 def get_response(question):
     global context
-    cached = caching_handler.read_from_caches(question)
-    if cached:
-        utils.clear_all()
-        print ("You: ", question, "\n\n-------------------------\n\n", cached, "\n\n-------------------------\n\nDetected similar question in cache (match: {:.1f}%)\n\n-------------------------\n".format(caching_handler.match))
-        return cached
-    elif question[0] == "$":
-        context = model_client.embedding(question)
-    else: context = "You are a helpful assistant."
+    if question[0] == "$":
+        if not file_handler.check_for_image(fN):
+            context = model_client.embedding(question)
+    else: context = ""
     generate_response(question)
     response = model_client.mRes
     utils.clear_all()
@@ -48,17 +43,22 @@ def handle_conversation(question):
     try:
         utils.clear_all()
         print ("You: ", question, "\n\n-------------------------\n")
-
-        model_client.memorize_question(question)
-        if question[0] == "$":  # Enable file reading
-            utils.set_marker()
-            fN = file_handler.get_file()
-            if question[1] == "@":  # Enable reasoning
-                print ("\n-------------------------\n\nEnabled reasoning! Please wait...\n\n-------------------------\n")
-            else:
-                print ("\n-------------------------\n")
-        if question[0] == "@":  # Enable reasoning
-            print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
+        cached = caching_handler.read_from_caches(question)
+        if cached:
+            utils.clear_all()
+            print ("You: ", question, "\n\n-------------------------\n\n", cached, "\n\n-------------------------\n\nDetected similar question in cache (match: {:.1f}%)\n\n-------------------------\n".format(caching_handler.match))
+            return cached
+        else:
+            model_client.memorize_question(question)
+            if question[0] == "$":  # Enable file reading
+                utils.set_marker()
+                fN = file_handler.get_file()
+                if question[1] == "@":  # Enable reasoning
+                    print ("\n-------------------------\n\nEnabled reasoning! Please wait...\n\n-------------------------\n")
+                else:
+                    print ("\n-------------------------\n")
+            if question[0] == "@":  # Enable reasoning
+                print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
         get_response(question)
 
         logging_handler.log_interaction(question, model_client.gRes, model_client.cRes, model_client.mRes)

@@ -8,12 +8,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def ge_embed(question):  # gemini-embedding-001
     chunks = file_handler.chunk_by_sentence(500, 2)
-    """
-    for i, chunk in enumerate(chunks):  # debug
-        print(f"=== Chunk {i} ===")
-        print(chunk)
-        print()
-    """
     allchunks = [question] + chunks
 
     response = [
@@ -35,36 +29,6 @@ def ge_embed(question):  # gemini-embedding-001
     context = "\n\n".join(context_parts)
     context = "Reference materials and contexts:\n\n" + context
     return context
-
-"""
-    results = list(zip(chunks, similarities))
-    results.sort(key=lambda x: x[1], reverse=True)
-
-    print(f"Query: '{question}'\n")
-    for i, score in results:
-        print(f"Similarity: {score:.4f} - {i}")
-"""
-
-"""
-    for i, chunk in enumerate(chunks):
-        print(f"=== Chunk {i} ===")
-        print(chunk)
-        print()
-
-    for chunk in chunks:
-        response = model_client.client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=[chunk],
-            config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
-        )
-        vector = response.embeddings
-        for vec in vector:
-            vector_store.append({
-                "chunk": chunk,
-                "vector": vec
-            })
-    print(file_handler.retrieve_relevant_chunks(question, 3))
-"""
 
 def e4_embed():  # embed-v4.0
     """empty"""
