@@ -1,36 +1,39 @@
 from google.genai import Client
 from cohere import ClientV2
+from sklearn.metrics.pairwise import cosine_similarity
 from src import response_handler
 from src import generate_handler
 from src import embedding_handler
+from src import file_handler
 from src import utils
+import numpy as np
 import time
 
 client = None  # Gemini client
 co = None  # Cohere client
 # vs code kept asking me to add the previous two lines (WHY) even tho the whole thing works without them
 
-gMsg = []  # Stands for Gemini messages
-cMsg = []  # Stands for Cohere messages
-mMsg = []  # Stands for merged messages
-fullR = []  # Stands for full response
-gRes = ""  # Stands for Gemini response
-cRes = ""  # Stands for Cohere response
-mRes = ""  # Stands for merged response
-gThought = False  # Stands for Gemini thought
-cThought = False  # Stands for Cohere thought
-gET = None  # Stands for Gemini End Thinking
-cET = None  # Stands for Cohere End Thinking
-mET = None  # Stands for Merged End Thinking
-gSG = None  # Stands for Gemini Start Generating
-cSG = None  # Stands for Cohere Start Generating
-mSG = None  # Stands for Merged Start Generating
-gEG = None  # Stands for Gemini End Generating
-cEG = None  # Stands for Cohere End Generating
-mEG = None  # Stands for Merged End Generating
-gMd = ""  # Stands for Gemini Model
-cMd = ""  # Stands for Cohere Model
-mMd = ""  # Stands for Merged Model
+gemini_messages = []
+command_messages = []
+merged_messages = []
+full_response = []
+gemini_response = ""
+command_response = ""
+merged_response = ""
+gemini_thought = False
+command_thought = False
+gemini_end_thinking = None
+command_end_thinking = None
+gemini_merge_end_thinking = None
+gemini_start_generating = None
+command_start_generating = None
+gemini_start_merging = None
+gemini_end_generating = None
+command_end_generating = None
+gemini_end_merging = None
+gemini_model = ""
+command_model = ""
+gemini_merge_model = ""
 
 def initialize_gemini():
     global client
@@ -57,134 +60,155 @@ def initialize_cohere():
         except: co = None  # KeyboardInterrupt check
 
 def memorize_question(question):
-    gMsg.append({"role": "user", "parts": [{"text": question}]})
-    cMsg.append({"role": "user", "content": question})
+    if question[0] == "$": question = question[1:]
+    if question[0] == "@": question = question[1:]
+    if file_handler.gemini_image:
+        gemini_messages.append({"role": "user","parts": [{"text": question},{"inline_data": file_handler.gemini_image}]})
+    else:
+        gemini_messages.append({"role": "user", "parts": [{"text": question}]})
+    if file_handler.command_image:
+        command_messages.append({"role": "user", "content": [{"type": "text","text": question},{"type": "image_url","image_url": {"url": file_handler.command_image,"detail": "high"}}]})
+    else:
+        command_messages.append({"role": "user", "content": question})
 
 def memorize_response():
-    gMsg.append({"role": "model", "parts": [{"text": mRes}]})
-    cMsg.append({"role": "assistant", "content": mRes})
+    gemini_messages.append({"role": "model", "parts": [{"text": merged_response}]})
+    command_messages.append({"role": "assistant", "content": merged_response})
 
 def embedding(question):
+    question = question[1:]
+    utils.set_marker()
+    print("Chunking...")
+    chunks = file_handler.chunk_by_sentence(500, 2)
+    allchunks = [question] + chunks
+    if len(allchunks) > 100:
+        print("The document is too long!")
+        return "error!"
+    utils.clear_screen()
+    print("Chunking... Done!")
+    utils.set_marker()
+    print("Embedding...")
     try:
-        question = question[1:]
-        context = embedding_handler.ge_embed(question)
-        return context
+        embeddings = embedding_handler.ge_embed(allchunks)
     except:
         try:
-            question = question[1:]
-            embedding_handler.e4_embed()
+            embeddings = embedding_handler.e4_embed(allchunks)
         except:
             try:
-                question = question[1:]
-                embedding_handler.e3_embed()
+                embeddings = embedding_handler.e3_embed(allchunks)
             except:
                 try:
-                    question = question[1:]
-                    embedding_handler.el3_embed()
-                except Exception as e:  # Erm... you are probably doing something wrong!
+                    embeddings = embedding_handler.el3_embed(allchunks)
+                except Exception as e:
                     print("An error occurred while embedding: ", e)
+                    return "error!"
+    if embeddings.size == 0:
+        print("An error occurred while embedding! The rate limit might be reached!")
+        return "error!"
+    utils.clear_screen()
+    print("Embedding... Done!")
+    query_embedding = embeddings[0:1]
+    doc_embeddings = embeddings[1:]
+
+    similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
+    top_k_indices = np.argsort(similarities)[::-1][:3]
+    context_parts = []
+    for rank, idx in enumerate(top_k_indices, 1):
+        context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
+
+    context = "\n\n".join(context_parts)
+    context = "Reference materials and contexts:\n\n" + context + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
+    return context
 
 def ask_gemini(question):
-    global gMsg, gRes, fullR, gThought, gET, gSG, gEG, gMd
-    gThought = False
-    fullR.clear()
+    global gemini_messages, gemini_response, full_response, gemini_thought, gemini_end_thinking, gemini_start_generating, gemini_end_generating, gemini_model
+    gemini_thought = False
+    full_response.clear()
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
-        if question[0] == "$": question = question[1:]  # File reading
         if question[0] == "@":  # Reasoning
-            gMd = "Gemini 2.5 Pro"
-            question = question[1:]
-            generate_handler.gemini_generate("gemini-2.5-pro", -1)
+            gemini_model = "Gemini 2.5 Pro"
+            generate_handler.gemini_generate("gemini-2.5-pro", True)
         else:  # No reasoning
-            gMd = "Gemini 2.5 Flash"
-            generate_handler.gemini_generate("gemini-2.5-flash", 0)
+            gemini_model = "Gemini 2.5 Flash"
+            generate_handler.gemini_generate("gemini-2.5-flash", False)
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            gMd = "Gemini 2.5 Flash"
-            if question[0] == "$": question = question[1:]  # File reading
+            gemini_model = "Gemini 2.5 Flash"
             if question[0] == "@":  # Reasoning
-                question = question[1:]
-                generate_handler.gemini_generate("gemini-2.5-flash", -1)
+                generate_handler.gemini_generate("gemini-2.5-flash", True)
             else:  # No reasoning
-                generate_handler.gemini_generate("gemini-2.5-flash", 0)
+                generate_handler.gemini_generate("gemini-2.5-flash", False)
         except:
             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
-                gMd = "Gemini 2.5 Flash Lite"
-                if question[0] == "$": question = question[1:]  # File reading
+                gemini_model = "Gemini 2.5 Flash Lite"
                 if question[0] == "@":  # Reasoning
-                    question = question[1:]
-                    generate_handler.gemini_generate("gemini-2.5-flash-lite", -1)
+                    generate_handler.gemini_generate("gemini-2.5-flash-lite", True)
                 else:  # No reasoning
-                    generate_handler.gemini_generate("gemini-2.5-flash-lite", 0)
+                    generate_handler.gemini_generate("gemini-2.5-flash-lite", False)
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key invalid / An error occurred: ", e)
-    gRes = ''.join(fullR)  # Join all chunks into a single string for logging and further processing
-    gEG = f"{time.perf_counter() - gSG:.3f}"
+    gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
+    gemini_end_generating = f"{time.perf_counter() - gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
 
 def ask_command(question):
-    global cMsg, cRes, cThought, cET, cSG, cEG, cMd
-    cThought = False
-    cRes = ""
+    global command_messages, command_response, command_thought, command_end_thinking, command_start_generating, command_end_generating, command_model
+    command_thought = False
+    command_response = ""
     try:  # Command A
-        cMd = "Command A"
-        if question[0] == "$": question = question[1:]  # File reading
+        command_model = "Command A"
         if question[0] == "@":  # Reasoning
-            question = question[1:]
             generate_handler.command_generate("command-a-reasoning-08-2025", "enabled")
         else:  # No reasoning
-            generate_handler.command_generate("command-a-03-2025", "disabled")
+            if file_handler.command_image: generate_handler.command_generate("command-a-vision-07-2025", "disabled")
+            else: generate_handler.command_generate("command-a-03-2025", "disabled")
     except Exception as e:
         print(e)
         try:  # Command R+, fallback if A is not available, it doesn't support reasoning
-            cMd = "Command R+"
-            if question[0] == "$": question = question[1:]  # File reading
-            question = question[1:]
+            command_model = "Command R+"
             generate_handler.command_generate("command-r-plus-08-2024", "disabled")
         except:
             try:  # Command R, fallback if R+ is not available, although you'll barely reach this point, R doesn't support reasoning
-                cMd = "Command R"
-                if question[0] == "$": question = question[1:]  # File reading
+                command_model = "Command R"
                 generate_handler.command_generate("command-r-08-2024", "disabled")
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Cohere API Key invalid / An error occurred: ", e)
-    cEG = f"{time.perf_counter() - cSG:.3f}"
+    command_end_generating = f"{time.perf_counter() - command_start_generating:.3f}"
+    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def merge_responses(question):
-    global gRes, cRes, mMsg, mRes, mET, mSG, mEG, mMd
-    mSG = time.perf_counter()
-    mMsg = [{"role": "user", "parts": [{"text": question}]}]
+    global gemini_response, command_response, merged_messages, merged_response, gemini_merge_end_thinking, gemini_start_merging, gemini_end_merging, gemini_merge_model, error
+    gemini_start_merging = time.perf_counter()
+    merged_messages = [{"role": "user", "parts": [{"text": question}]}]
 
     try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
-        if question[0] == "$": question = question[1:]  # File reading
         if question[0] == "@":  # Reasoning
-            mMd = "Gemini 2.5 Pro"
-            question = question[1:]
-            response = generate_handler.gemini_merge("gemini-2.5-pro", -1)
+            gemini_merge_model = "Gemini 2.5 Pro"
+            response = generate_handler.gemini_merge("gemini-2.5-pro", True)
         else:  # No reasoning
-            mMd = "Gemini 2.5 Flash"
-            response = generate_handler.gemini_merge("gemini-2.5-flash", 0)
+            gemini_merge_model = "Gemini 2.5 Flash"
+            response = generate_handler.gemini_merge("gemini-2.5-flash", False)
+        utils.clear_all()
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            if question[0] == "$": question = question[1:]  # File reading
             if question[0] == "@":  # Reasoning
-                mMd = "Gemini 2.5 Flash"
-                question = question[1:]
-                response = generate_handler.gemini_merge("gemini-2.5-flash", -1)
+                gemini_merge_model = "Gemini 2.5 Flash"
+                response = generate_handler.gemini_merge("gemini-2.5-flash", True)
             else:  # No reasoning
-                mMd = "Gemini 2.5 Flash"
-                response = generate_handler.gemini_merge("gemini-2.5-flash", 0)
+                gemini_merge_model = "Gemini 2.5 Flash"
+                response = generate_handler.gemini_merge("gemini-2.5-flash", False)
+            utils.clear_all()
         except:
             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available, although you'll barely reach this point
-                if question[0] == "$": question = question[1:]  # File reading
                 if question[0] == "@":  # Reasoning
-                    mMd = "Gemini 2.5 Flash Lite"
-                    question = question[1:]
-                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", -1)
+                    gemini_merge_model = "Gemini 2.5 Flash Lite"
+                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", True)
                 else:  # No reasoning
-                    mMd = "Gemini 2.5 Flash Lite"
-                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", 0)
+                    gemini_merge_model = "Gemini 2.5 Flash Lite"
+                    response = generate_handler.gemini_merge("gemini-2.5-flash-lite", False)
+                utils.clear_all()
             except Exception as e:  # Erm... you are probably doing something wrong!
                 print("Gemini API Key invalid / An error occurred: ", e)
-    mET = f"{time.perf_counter() - response_handler.tS:.3f}"
-    mEG = f"{time.perf_counter() - mSG:.3f}"
-    mRes = response.text
+    gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
+    gemini_end_merging = f"{time.perf_counter() - gemini_start_merging:.3f}"
+    merged_response = response.text

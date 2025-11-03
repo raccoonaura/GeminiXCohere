@@ -5,66 +5,81 @@ from src import model_client
 from src import utils
 import threading
 import time
-tS = None  # Stands for Thought Start
-fN = ""  # Stands for File Name
+thought_start = None
+image = ""
+document = ""
 context = ""
 
 def get_response(question):
     global context
     if question[0] == "$":
-        if not file_handler.check_for_image(fN):
+        if image: file_handler.check_for_image(image)
+        if document:
             context = model_client.embedding(question)
-    else: context = ""
+            if context == "error!":
+                return
+            if question[1] == "@":  # Enable reasoning
+                print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
+            else:
+                print ("\n-------------------------\n")
+    else:
+        context = ""
+    model_client.memorize_question(question)
     generate_response(question)
-    response = model_client.mRes
-    utils.clear_all()
-    print ("You: ", question, "\n\n-------------------------\n\n", model_client.mRes, "\n\n-------------------------\n\nThought for", model_client.mET, "seconds in total, took", model_client.mEG, "seconds to merge the answers, generated", len(model_client.mRes), "tokens.\nUsed model", model_client.gMd, "and", model_client.cMd, ", merged using", model_client.mMd, ".\n\n-------------------------\n")
+    if not file_handler.skip_gemini and not file_handler.skip_command:
+        response = model_client.merged_response
+        print (f"You: {question}\n\n-------------------------\n\n{model_client.merged_response}\n\n-------------------------\n\nThought for {model_client.gemini_merge_end_thinking} seconds in total, took {model_client.gemini_end_merging} seconds to merge the answers, generated {len(model_client.merged_response)} tokens.\nUsed model {model_client.gemini_model} and {model_client.command_model}, merged using {model_client.gemini_merge_model}.\n\n-------------------------\n")
+        logging_handler.log_interaction(question, model_client.gemini_response, model_client.command_response, model_client.merged_response)
+    elif file_handler.skip_command:
+        response = model_client.gemini_response
+        logging_handler.log_interaction(question, model_client.gemini_response, "(Skipped. Unsupported image type for this model.)", model_client.gemini_response)
+    else:
+        response = model_client.command_response
+        logging_handler.log_interaction(question, "(Skipped. Unsupported image type for this model.)", model_client.command_response, model_client.command_response)
     caching_handler.write_to_caches(question, response)
-    return response
+    model_client.memorize_response()
 
 def generate_response(question):
-    global tS
+    global thought_start
     t1 = threading.Thread(target=model_client.ask_gemini, args=(question,))
     t2 = threading.Thread(target=model_client.ask_command, args=(question,))
-    t1.start()
-    t2.start()
-    tS = time.perf_counter()
-    t1.join()
-    t2.join()
-    print("Gemini thought for", model_client.gET, "seconds, took", model_client.gEG, "seconds to generate the answer, generated", len(model_client.gRes), "tokens, using model", model_client.gMd, ".")
-    print("Command thought for", model_client.cET, "seconds, took", model_client.cEG, "seconds to generate the answer, generated", len(model_client.cRes), "tokens, using model", model_client.cMd, ".\n\n-------------------------\n\nGenerating full response...")
+    if not file_handler.skip_gemini:
+        t1.start()
+    if not file_handler.skip_command:
+        t2.start()
+    thought_start = time.perf_counter()
+    if not file_handler.skip_gemini:
+        t1.join()
+    if not file_handler.skip_command:
+        t2.join()
+    if not file_handler.skip_gemini and not file_handler.skip_command:
+        print(f"Gemini thought for {model_client.gemini_end_thinking} seconds, took {model_client.gemini_end_generating} seconds to generate the answer, generated {len(model_client.gemini_response)} tokens, using model {model_client.gemini_model}.\nCommand thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} tokens, using model {model_client.command_model}.\n\n-------------------------\n\nGenerating full response...")
+    if not file_handler.skip_gemini and file_handler.skip_command:
+        print(f"Gemini thought for {model_client.gemini_end_thinking} seconds, took {model_client.gemini_end_generating} seconds to generate the answer, generated {len(model_client.gemini_response)} tokens, using model {model_client.gemini_model}.\n\n-------------------------\n")
+    if file_handler.skip_gemini and not file_handler.skip_command:
+        print(f"Command thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} tokens, using model {model_client.command_model}.\n\n-------------------------\n")
     # exit() # to test if the program works before merging
-    t3 = threading.Thread(target=model_client.merge_responses, args=(question,))
-    t3.start()
-    t3.join()
+    if not file_handler.skip_gemini and not file_handler.skip_command:
+        t3 = threading.Thread(target=model_client.merge_responses, args=(question,))
+        t3.start()
+        t3.join()
 
 def handle_conversation(question):
-    global fN
+    global image, document
     try:
         utils.clear_all()
-        print ("You: ", question, "\n\n-------------------------\n")
+        print (f"You: {question}\n\n-------------------------\n")
         cached = caching_handler.read_from_caches(question)
         if cached:
-            utils.clear_all()
-            print ("You: ", question, "\n\n-------------------------\n\n", cached, "\n\n-------------------------\n\nDetected similar question in cache (match: {:.1f}%)\n\n-------------------------\n".format(caching_handler.match))
+            print (cached, "\n\n-------------------------\n\nDetected similar question in cache (match: {:.1f}%)\n\n-------------------------\n".format(caching_handler.match))
             return cached
         else:
-            model_client.memorize_question(question)
             if question[0] == "$":  # Enable file reading
                 utils.set_marker()
-                fN = file_handler.get_file()
-                if question[1] == "@":  # Enable reasoning
-                    print ("\n-------------------------\n\nEnabled reasoning! Please wait...\n\n-------------------------\n")
-                else:
-                    print ("\n-------------------------\n")
+                image, document = file_handler.get_file()
             if question[0] == "@":  # Enable reasoning
                 print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
-        get_response(question)
-
-        logging_handler.log_interaction(question, model_client.gRes, model_client.cRes, model_client.mRes)
-
-        model_client.memorize_response()
-
+            get_response(question)
         utils.set_marker()
 
     except Exception as e:

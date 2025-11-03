@@ -3,10 +3,15 @@ from src import response_handler
 from src import utils
 import os
 import re
+import mimetypes
+import base64
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
-image = None
+gemini_image = None
+command_image = None
+skip_gemini = False
+skip_command = False
 
 def get_file():
 
@@ -18,7 +23,10 @@ def get_file():
 
     files = [f for f in files 
             if os.path.isfile(os.path.join("embeds", f)) 
-            and any(f.endswith(ext) for ext in [".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif"])]
+            and any(f.endswith(ext) for ext in [".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif"])]
+    if not files:
+        print(f"Error! None of the files in the embeds folder are supported!")
+        return None
     """
     planned file types to support:
 
@@ -40,83 +48,66 @@ def get_file():
     Structured data files: json, xml, yaml
     Web content files: html
     """
-    if not files:
-        print(f"Error! None of the files in the embeds folder are supported!")
-        return None
-
-    print("Available files:\n")
-    for i, filename in enumerate(files, 1):
-        print(f"└ {i}. {filename}")
 
     utils.set_marker()
 
+    image = "(Not selected)"
+    document = "(Not selected)"
+
     while True:
         try:
-            choice = input(f"\nPlease select the desired file (1~{len(files)}): ").strip()
+            print("Available files:\n")
+            for i, filename in enumerate(files, 1):
+                print(f"└ {i}. {filename}")
+
+            print(f'\nImage: {image}, Document: {document}\n(Type "done" to finish selecting.)')
+            choice = input(f'\nSelect the desired file (1~{len(files)}): ').strip()
+            if choice == "done":
+                if image == "(Not selected)": image = ""
+                if document == "(Not selected)": document = ""
+                utils.clear_screen()
+                return image, document
             choice = int(choice)
-            
+            name, ext = os.path.splitext(files[choice - 1])
             if 1 <= choice <= len(files):
-                selected = files[choice - 1]
-                print(f"\nSelected: {selected}")
-                return selected
+                if ext.lower() in [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif"]:
+                    if image == files[choice - 1]:
+                        image = "(Not selected)"
+                    else:
+                        image = files[choice - 1]
+                else:
+                    if document == files[choice - 1]:
+                        document = "(Not selected)"
+                    else:
+                        document = files[choice - 1]
+                utils.clear_screen()
             else:
                 utils.clear_screen()
-        
-        except ValueError:
-            utils.clear_screen()
-            continue
-        except KeyboardInterrupt:
+        except:
             utils.clear_screen()
             continue
 
 def check_for_image(file):
-    global image
+    global gemini_image, command_image, skip_gemini, skip_command
+    skip_gemini = False
+    skip_command = False
+    path = "embeds/" + file
+    mime_type, _ = mimetypes.guess_type(path)
+    with open(path, 'rb') as f: image_bytes = f.read()
+    encoded_string = base64.b64encode(image_bytes).decode("utf-8")
     name, ext = os.path.splitext(file)
-    if ext.lower() == ".png":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/png"
-        )
-        return True
-    elif ext.lower() == ".jpg":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/jpeg"
-        )
-        return True
-    elif ext.lower() == ".jpeg":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/jpeg"
-        )
-        return True
-    elif ext.lower() == ".webp":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/webp"
-        )
-        return True
-    elif ext.lower() == ".heic":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/heic"
-        )
-        return True
-    elif ext.lower() == ".heif":
-        with open('embeds/' + file, 'rb') as f:
-            image_bytes = f.read()
-        image = types.Part.from_bytes(
-            data=image_bytes, mime_type="image/heif"
-        )
-        return True
+    if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
+        gemini_image = {"mime_type":mime_type, "data": image_bytes}
+        command_image = f"data:{mime_type};base64,{encoded_string}"
+    elif ext.lower() in [".heic", ".heif"]:
+        gemini_image = {"mime_type":mime_type, "data": image_bytes}
+        skip_command = True
+    elif ext.lower() in ".gif":
+        command_image = f"data:{mime_type};base64,{encoded_string}"
+        skip_gemini = True
     else:
-        image = None
-        return False
+        gemini_image = None
+        command_image = None
 
 def load_text_file(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -127,7 +118,7 @@ def chunk_by_sentence(max_length, overlap):  # 我決定把每一句留下中文
         sentences: 切斷後的本文, 含全部的句子, sentence: 本文切段後的一個句子,
         current_chunk: 一個段落, 好幾個句子, chunks: 切段並重新安排後的好幾個段落,
         tail: 上一個段落的尾端幾句, """
-    text = load_text_file("embeds/" + response_handler.fN)
+    text = load_text_file("embeds/" + response_handler.document)
 
     sentences = re.split(r'(?<=[。！？.!?…])\s*', text)  # 遇到。！？.!?…這些符號之一就切成一句
     sentences = [s.strip() for s in sentences if s.strip()]  # 避免符號單獨一句
@@ -185,5 +176,4 @@ def chunk_by_sentence(max_length, overlap):  # 我決定把每一句留下中文
             i += 1  # 換下一句
     if current_chunk:  # 如果current_chunk不是空的
         chunks.append(" ".join(current_chunk))  # 保存跑完全部後的最後一個current_chunk
-
     return chunks
