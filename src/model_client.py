@@ -34,6 +34,8 @@ gemini_end_merging = None
 gemini_model = ""
 command_model = ""
 gemini_merge_model = ""
+embed_model = ""
+rerank_model = ""
 
 def initialize_gemini():
     global client
@@ -76,6 +78,7 @@ def memorize_response():
     command_messages.append({"role": "assistant", "content": merged_response})
 
 def embedding(question):
+    global embed_model, rerank_model
     question = question[1:]
     utils.set_marker()
     print("Chunking...")
@@ -89,33 +92,66 @@ def embedding(question):
     utils.set_marker()
     print("Embedding...")
     try:
-        embeddings = embedding_handler.ge_embed(allchunks)
+        embed_model = "Gemini Embedding 001"
+        query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
     except:
         try:
-            embeddings = embedding_handler.e4_embed(allchunks)
+            embed_model = "Embed v4.0"
+            query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
+            query_embedding = np.array(query_embedding)
+            doc_embeddings = np.array(doc_embeddings)
         except:
             try:
-                embeddings = embedding_handler.e3_embed(allchunks)
+                embed_model = "Embed Multilingual v3.0"
+                query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
+                query_embedding = np.array(query_embedding)
+                doc_embeddings = np.array(doc_embeddings)
             except:
                 try:
-                    embeddings = embedding_handler.el3_embed(allchunks)
+                    embed_model = "Embed Multilingual Light v3.0"
+                    query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
+                    query_embedding = np.array(query_embedding)
+                    doc_embeddings = np.array(doc_embeddings)
                 except Exception as e:
+                    embed_model = ""
                     print("An error occurred while embedding: ", e)
                     return "error!"
-    if embeddings.size == 0:
+    if query_embedding.size == 0 or doc_embeddings.size == 0:
         print("An error occurred while embedding! The rate limit might be reached!")
         return "error!"
     utils.clear_screen()
     print("Embedding... Done!")
-    query_embedding = embeddings[0:1]
-    doc_embeddings = embeddings[1:]
+    utils.set_marker()
+    print("Calculating...")
 
     similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
-    top_k_indices = np.argsort(similarities)[::-1][:3]
-    context_parts = []
-    for rank, idx in enumerate(top_k_indices, 1):
-        context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
-
+    if len(allchunks) >= 10: top_ks = 10
+    else: top_ks = len(allchunks)
+    top_k_indices = np.argsort(similarities)[::-1][:top_ks]
+    top_k_results = [chunks[i] for i in top_k_indices]
+    utils.clear_screen()
+    print("Calculating... Done!")
+    utils.set_marker()
+    print("Reranking...")
+    try:
+        rerank_model = "Rerank v3.5"
+        context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
+        utils.clear_screen()
+        print("Reranking... Done!")
+    except:
+        try:
+            rerank_model = "Rerank Multilingual v3.0"
+            context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
+            utils.clear_screen()
+            print("Reranking... Done!")
+        except:
+            rerank_model = ""
+            top_k_indices = np.argsort(similarities)[::-1][:3]
+            context_parts = []
+            for rank, idx in enumerate(top_k_indices, 1):
+                context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
+            utils.clear_screen()
+            print("Reranking... Skipped! The rate limit might be reached!")
     context = "\n\n".join(context_parts)
     context = "Reference materials and contexts:\n\n" + context + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
     return context
