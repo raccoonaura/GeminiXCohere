@@ -1,14 +1,13 @@
 from src import response_handler
-from src import logging_handler
-from src import caching_handler
+from src import memory_handler
 from src import model_client
 from src import utils
 
 question = ""
 
 if __name__ == "__main__":
-    logging_handler.reset_logs()
-    caching_handler.reset_caches()
+    memory_handler.reset_logs()
+    memory_handler.reset_caches()
 
 model_client.initialize_gemini()
 model_client.initialize_cohere()
