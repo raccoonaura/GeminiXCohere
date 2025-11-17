@@ -5,12 +5,15 @@ from src import utils
 
 question = ""
 
+model_client.initialize_gemini()
+model_client.initialize_cohere()
+utils.clear_all()
+
 if __name__ == "__main__":
     memory_handler.reset_logs()
     memory_handler.reset_caches()
+    memory_handler.choose_history()
 
-model_client.initialize_gemini()
-model_client.initialize_cohere()
 
 while question.strip() == "":
     utils.clear_all()

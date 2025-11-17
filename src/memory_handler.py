@@ -1,15 +1,18 @@
 from src import file_handler
 from src import model_client
+from src import utils
 from rapidfuzz import fuzz
 import os
 import shutil
 import hashlib
+import json
 
 LOGS_DIR = "logs"  # reading purposes
 CACHES_DIR = "caches"  # to detect similar / same prompt
-HISTORIES_DIR = "histories"  # for chat histories (WIP)
+HISTORIES_DIR = "histories"  # for chat histories
 threshold = 90
 match = None
+current_history = ""
 
 def memorize_question(question):
     if question[0] == "$": question = question[1:]
@@ -24,8 +27,18 @@ def memorize_question(question):
         model_client.command_messages.append({"role": "user", "content": question})
 
 def memorize_response():
+    global current_history
     model_client.gemini_messages.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
     model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
+    if not current_history:
+        data = {'gemini': model_client.gemini_messages, 'command': model_client.command_messages}
+        list_str = json.dumps(data)
+        file_hash = hashlib.md5(list_str.encode()).hexdigest()
+        current_history = f'{file_hash}.json'
+        with open("histories/" + current_history, 'w') as f: json.dump(data, f)
+    else:
+        data = {'gemini': model_client.gemini_messages, 'command': model_client.command_messages}
+        with open("histories/" + current_history, 'w') as f: json.dump(data, f)
 
 def reset_logs():
     if os.path.exists(LOGS_DIR):
@@ -82,3 +95,40 @@ def write_to_caches(question: str, response: str):
     with open(path, "w", encoding="utf-8") as f:
         f.write(question + "\n")
         f.write(response)
+
+def choose_history():
+    if os.path.exists(HISTORIES_DIR): pass
+    else: os.makedirs(HISTORIES_DIR)
+    filename = "(Not selected)"
+    new_chat_number = len(os.listdir(HISTORIES_DIR)) + 1
+    while True:
+        try:
+            print("Choose a chat history:\n")
+            for i, filename in enumerate(os.listdir(HISTORIES_DIR), 1):
+                print(f"└ {i}. {filename}")
+            print(f"└ {new_chat_number}. *Create a new chat*")
+            print(f'Selected: {filename}\n(Type "done" to finish selecting.)')
+            choice = input(f'\nSelect the desired chat history (1~{new_chat_number}): ').strip()
+            if choice == "done":
+                if filename == "(Not selected)": continue
+                utils.clear_screen()
+                with open(f"{filename}.json", 'r') as f:
+                    data = json.load(f)
+                    model_client.gemini_messages = data['gemini']
+                    model_client.command_messages = data['command']
+                    return
+            choice = int(choice)
+            if 1 <= choice <= new_chat_number:
+                if choice == new_chat_number:
+                    utils.clear_screen()
+                    return
+                elif filename == filename in os.listdir(HISTORIES_DIR)[choice - 1]:
+                    filename = "(Not selected)"
+                else:
+                    filename = filename in os.listdir(HISTORIES_DIR)[choice - 1]
+                utils.clear_screen()
+            else:
+                utils.clear_screen()
+        except:
+            utils.clear_screen()
+            continue
