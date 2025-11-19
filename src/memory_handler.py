@@ -102,6 +102,7 @@ def choose_history():
     if os.path.exists(HISTORIES_DIR): pass
     else: os.makedirs(HISTORIES_DIR)
     filename = "(Not selected)"
+    utils.set_marker()
     new_chat_number = len(os.listdir(HISTORIES_DIR)) + 1
     if new_chat_number == 1:
         utils.clear_screen()
