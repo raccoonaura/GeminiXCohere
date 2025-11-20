@@ -14,10 +14,14 @@ HISTORIES_DIR = "histories"  # for chat histories
 threshold = 90
 match = None
 current_history = ""
+gemini_histories = []
+command_histories = []
 
 def memorize_question(question):
     if question[0] == "$": question = question[1:]
     if question[0] == "@": question = question[1:]
+    gemini_histories.append({"role": "user", "parts": [{"text": question}]})
+    command_histories.append({"role": "user", "content": question})
     if file_handler.gemini_image:
         model_client.gemini_messages.append({"role": "user","parts": [{"text": question},{"inline_data": file_handler.gemini_image}]})
     else:
@@ -29,10 +33,12 @@ def memorize_question(question):
 
 def memorize_response():
     global current_history
+    gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
+    command_histories.append({"role": "assistant", "content": model_client.merged_response})
     model_client.gemini_messages.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
     model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
     if not current_history:
-        data = {'gemini': model_client.gemini_messages, 'command': model_client.command_messages}
+        data = {'gemini': gemini_histories, 'command': command_histories}
         dt = datetime.datetime.now()
         now = dt.strftime('%Y-%m-%d-%H-%M-%S')
         current_history = f'{now}.json'

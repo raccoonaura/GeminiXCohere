@@ -14,7 +14,6 @@ if __name__ == "__main__":
     memory_handler.reset_caches()
     memory_handler.choose_history()
 
-
 while question.strip() == "":
     utils.clear_all()
     try: question = input("Hello! How can I assist you today? ")

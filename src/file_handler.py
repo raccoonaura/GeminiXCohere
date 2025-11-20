@@ -1,4 +1,3 @@
-from google.genai import types
 from src import response_handler
 from src import utils
 import os

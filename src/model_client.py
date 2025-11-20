@@ -3,7 +3,6 @@ from cohere import ClientV2
 from src import response_handler
 from src import generate_handler
 from src import file_handler
-from src import model_client
 from src import utils
 import time
 
@@ -71,32 +70,36 @@ def ask_gemini(question):
             gemini_model = "Gemini 2.5 Flash"
             generate_handler.gemini_generate("gemini-2.5-flash", False)
     except:
-        try:  # Gemini 2.5 Flash, fallback if Pro is not available
-            gemini_model = "Gemini 2.5 Flash"
-            if question[0] == "@":  # Reasoning
-                generate_handler.gemini_generate("gemini-2.5-flash", True)
-            else:  # No reasoning
-                generate_handler.gemini_generate("gemini-2.5-flash", False)
-        except:
-            try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available
-                gemini_model = "Gemini 2.5 Flash Lite"
+        if not gemini_thought:
+            try:  # Gemini 2.5 Flash, fallback if Pro is not available
+                gemini_model = "Gemini 2.5 Flash"
                 if question[0] == "@":  # Reasoning
-                    generate_handler.gemini_generate("gemini-2.5-flash-lite", True)
+                    generate_handler.gemini_generate("gemini-2.5-flash", True)
                 else:  # No reasoning
-                    generate_handler.gemini_generate("gemini-2.5-flash-lite", False)
+                    generate_handler.gemini_generate("gemini-2.5-flash", False)
             except:
-                try:  # Gemini 2.0 Flash, fallback if 2.5 is not available
-                    gemini_model = "Gemini 2.0 Flash"
-                    if question[0] == "@":  # Reasoning
-                        generate_handler.gemini_generate("gemini-2.0-flash", True)
-                    else:  # No reasoning
-                        generate_handler.gemini_generate("gemini-2.0-flash", False)
-                except:
-                    try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
-                        gemini_model = "Gemini 2.0 Flash Lite"
-                        generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
-                    except Exception as e:  # Erm... you are probably doing something wrong!
-                        print("Gemini API Key invalid / An error occurred: ", e)
+                if not gemini_thought:
+                    try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available
+                        gemini_model = "Gemini 2.5 Flash Lite"
+                        if question[0] == "@":  # Reasoning
+                            generate_handler.gemini_generate("gemini-2.5-flash-lite", True)
+                        else:  # No reasoning
+                            generate_handler.gemini_generate("gemini-2.5-flash-lite", False)
+                    except:
+                        if not gemini_thought:
+                            try:  # Gemini 2.0 Flash, fallback if 2.5 is not available
+                                gemini_model = "Gemini 2.0 Flash"
+                                if question[0] == "@":  # Reasoning
+                                    generate_handler.gemini_generate("gemini-2.0-flash", True)
+                                else:  # No reasoning
+                                    generate_handler.gemini_generate("gemini-2.0-flash", False)
+                            except:
+                                if not gemini_thought:
+                                    try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
+                                        gemini_model = "Gemini 2.0 Flash Lite"
+                                        generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
+                                    except Exception as e:
+                                        if not gemini_thought: print("Gemini API Key invalid / An error occurred: ", e)
     gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
     gemini_end_generating = f"{time.perf_counter() - gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
@@ -116,17 +119,18 @@ def ask_command(question):
             else:
                 command_model = "Command A"
                 generate_handler.command_generate("command-a-03-2025", "disabled")
-    except Exception as e:
-        print(e)
-        try:  # Command R+, fallback if A is not available, doesn't support reasoning and image reading
-            command_model = "Command R+"
-            generate_handler.command_generate("command-r-plus-08-2024", "disabled")
-        except:
-            try:  # Command R, fallback if R+ is not available, doesn't support reasoning
-                command_model = "Command R"
-                generate_handler.command_generate("command-r-08-2024", "disabled")
-            except Exception as e:  # Erm... you are probably doing something wrong!
-                print("Cohere API Key invalid / An error occurred: ", e)
+    except:
+        if not command_thought:
+            try:  # Command R+, fallback if A is not available, doesn't support reasoning and image reading
+                command_model = "Command R+"
+                generate_handler.command_generate("command-r-plus-08-2024", "disabled")
+            except:
+                if not command_thought:
+                    try:  # Command R, fallback if R+ is not available, doesn't support reasoning
+                        command_model = "Command R"
+                        generate_handler.command_generate("command-r-08-2024", "disabled")
+                    except Exception as e:
+                        print("Cohere API Key invalid / An error occurred: ", e)
     command_end_generating = f"{time.perf_counter() - command_start_generating:.3f}"
     if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
@@ -145,20 +149,18 @@ def merge_responses(question):
         utils.clear_all()
     except:
         try:  # Gemini 2.5 Flash, fallback if Pro is not available
+            gemini_merge_model = "Gemini 2.5 Flash"
             if question[0] == "@":  # Reasoning
-                gemini_merge_model = "Gemini 2.5 Flash"
                 response = generate_handler.gemini_merge("gemini-2.5-flash", True)
             else:  # No reasoning
-                gemini_merge_model = "Gemini 2.5 Flash"
                 response = generate_handler.gemini_merge("gemini-2.5-flash", False)
             utils.clear_all()
         except:
             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available
+                gemini_merge_model = "Gemini 2.5 Flash Lite"
                 if question[0] == "@":  # Reasoning
-                    gemini_merge_model = "Gemini 2.5 Flash Lite"
                     response = generate_handler.gemini_merge("gemini-2.5-flash-lite", True)
                 else:  # No reasoning
-                    gemini_merge_model = "Gemini 2.5 Flash Lite"
                     response = generate_handler.gemini_merge("gemini-2.5-flash-lite", False)
                 utils.clear_all()
             except:
@@ -172,7 +174,7 @@ def merge_responses(question):
                     try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
                         gemini_merge_model = "Gemini 2.0 Flash Lite"
                         generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
-                    except Exception as e:  # Erm... you are probably doing something wrong!
+                    except Exception as e:
                         print("Gemini API Key invalid / An error occurred: ", e)
     gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
     gemini_end_merging = f"{time.perf_counter() - gemini_start_merging:.3f}"
