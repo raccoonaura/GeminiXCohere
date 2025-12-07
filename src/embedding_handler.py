@@ -6,12 +6,13 @@ from src import utils
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-def embedding(question):
+def embedding(question, text):
     global embed_model, rerank_model
+    if text == "error!": return "error!"
     question = question[1:]
     utils.set_marker()
     print("Chunking...")
-    chunks = file_handler.chunk_by_sentence(500, 2)
+    chunks = file_handler.chunk_by_sentence(text, 500, 2)
     allchunks = [question] + chunks
     if len(allchunks) > 100:
         print("The document is too long!")

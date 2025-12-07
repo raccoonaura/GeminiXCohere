@@ -1,6 +1,7 @@
 caches/
 logs/
 histories/
+embeds/temp
 .venv/
 env/
 venv/

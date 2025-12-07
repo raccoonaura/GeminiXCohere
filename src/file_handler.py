@@ -1,9 +1,8 @@
-from src import response_handler
 from src import utils
-import os
-import re
 import mimetypes
 import base64
+import os
+import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
@@ -11,9 +10,20 @@ gemini_image = None
 command_image = None
 skip_gemini = False
 skip_command = False
+doc_types = [".rtf",  # ik this is more of a text file but hey its libreoffice handling it
+             ".odt", ".ott", ".fodt",
+             ".odp", ".otp", ".fodp",
+             ".odm", ".oth",
+             ".sxw", ".stw", ".sxg",
+             ".sxi", ".sti",
+             ".docx", ".dotx",
+             ".docm", ".dotm",
+             ".doc", ".dot",
+             ".pptx", ".potx",
+             ".pptm", ".potm",
+             ".ppt", ".pot"]
 
 def get_file():
-
     files = os.listdir("embeds")
     files = [f for f in files if not f.startswith('.') and os.path.isfile(os.path.join("embeds", f))]
     if not files:
@@ -22,31 +32,13 @@ def get_file():
 
     files = [f for f in files 
             if os.path.isfile(os.path.join("embeds", f)) 
-            and any(f.endswith(ext) for ext in [".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif"])]
+            and any(f.endswith(ext) for ext in doc_types + [".txt", ".md", ".markdown",
+                                                            ".html", ".htm", ".epub", ".pdf",
+                                                            ".png", ".jpg", ".jpeg", ".webp",
+                                                            ".heic", ".heif", ".gif"])]
     if not files:
         print(f"Error! None of the files in the embeds folder are supported!")
         return None
-    """
-    planned file types to support:
-
-    General text files: txt, md, rtf
-    General document files: pdf
-    ODF text files: odt, ott
-    ODF presentation files: odp, otp
-    Word files: docx, dotx,
-    Macro Word files: docm, dotm
-    Legacy Word files: doc, dot
-    PowerPoint files: pptx, ppsx, potx
-    Macro PowerPoint files: pptm, potm, ppsm
-    Legacy PowerPoint files: ppt, pps, pot
-    Excel files: xlsx, xltx
-    Macro Excel files: xlsm, xltm
-    Legacy Excel files: xls, xlt
-    E-books files: epub
-    Tabular data files: csv, tsv
-    Structured data files: json, xml, yaml
-    Web content files: html
-    """
 
     utils.set_marker()
 
@@ -86,7 +78,7 @@ def get_file():
             utils.clear_screen()
             continue
 
-def check_for_image(file):
+def handle_image(file):
     global gemini_image, command_image, skip_gemini, skip_command
     skip_gemini = False
     skip_command = False
@@ -108,16 +100,11 @@ def check_for_image(file):
         gemini_image = None
         command_image = None
 
-def load_text_file(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
-
-def chunk_by_sentence(max_length, overlap):  # 我決定把每一句留下中文註解 因為我自己都快亂了:P
+def chunk_by_sentence(text, max_length, overlap):  # 我決定把每一句留下中文註解 因為我自己都快亂了:P
     """ max_length: 用字數計算, overlap: 用句數計算,
         sentences: 切斷後的本文, 含全部的句子, sentence: 本文切段後的一個句子,
         current_chunk: 一個段落, 好幾個句子, chunks: 切段並重新安排後的好幾個段落,
         tail: 上一個段落的尾端幾句, """
-    text = load_text_file("embeds/" + response_handler.document)
 
     sentences = re.split(r'(?<=[。！？.!?…])\s*', text)  # 遇到。！？.!?…這些符號之一就切成一句
     sentences = [s.strip() for s in sentences if s.strip()]  # 避免符號單獨一句

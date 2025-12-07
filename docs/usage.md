@@ -27,3 +27,9 @@ python main.py
 6. 將需要被讀取的檔案放置在embeds資料夾
 7. 在問題前面加上"$"可以開啟文檔檢索模式 (RAG / 圖片讀取)
 8. 在問題前面加上"$@"可以開啟文檔檢索及思考模式
+## 4. 檔案檢索
+- 程式本身支援以下檔案
+    - 文檔: .**txt**, .**md**/.**markdown**, .**pdf**, .**html**/.**htm**, .**epub**
+    - 圖片: .**png**, .**jpg**/.**jpeg**, .**webp**, .**heic**, .**heif**, .**gif**
+- 若LibreOffice已安裝 會延伸支援以下檔案:
+    - 文檔: .**rtf**, .**odt**, .**ott**, .**fodt**, .**odp**, .**otp**, .**fodp**, .**odm**, .**oth**, .**sxw**, .**stw**, .**sxg**, .**sxi**, .**sti**, .**docx**, .**dotx**, .**docm**, .**dotm**, .**doc**, .**dot**, .**pptx**, .**potx**, .**pptm**, .**potm**, .**ppt**, .**pot**

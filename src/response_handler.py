@@ -1,4 +1,5 @@
 from src import embedding_handler
+from src import document_handler
 from src import memory_handler
 from src import file_handler
 from src import model_client
@@ -36,9 +37,9 @@ def handle_conversation(question):
 def get_response(question):
     global context
     if question[0] == "$":
-        if image: file_handler.check_for_image(image)
+        if image: file_handler.handle_image(image)
         if document:
-            context = embedding_handler.embedding(question)
+            context = embedding_handler.embedding(question, document_handler.handle_document(document))
             if context == "error!":
                 return
             if question[1] == "@":  # Enable reasoning
