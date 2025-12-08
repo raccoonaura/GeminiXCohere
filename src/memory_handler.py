@@ -121,6 +121,9 @@ def choose_history():
             print(f"└ {new_chat_number}. *Create a new chat*")
             print(f'Selected: {filename}\n(Type "done" to finish selecting.)')
             choice = input(f'\nSelect the desired chat history (1~{new_chat_number}): ').strip()
+            if choice == "":
+                utils.clear_screen()
+                continue
             if choice == "done":
                 if filename == "(Not selected)": continue
                 utils.clear_screen()
