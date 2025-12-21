@@ -7,7 +7,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 def embedding(question, text):
-    global embed_model, rerank_model
     if text == "error!": return "error!"
     question = question[1:]
     utils.set_marker()
@@ -22,28 +21,28 @@ def embedding(question, text):
     utils.set_marker()
     print("Embedding...")
     try:
-        embed_model = "Gemini Embedding 001"
+        model_client.embed_model = "Gemini Embedding 001"
         query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
     except:
         try:
-            embed_model = "Embed v4.0"
+            model_client.embed_model = "Embed v4.0"
             query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
             query_embedding = np.array(query_embedding)
             doc_embeddings = np.array(doc_embeddings)
         except:
             try:
-                embed_model = "Embed Multilingual v3.0"
+                model_client.embed_model = "Embed Multilingual v3.0"
                 query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
                 query_embedding = np.array(query_embedding)
                 doc_embeddings = np.array(doc_embeddings)
             except:
                 try:
-                    embed_model = "Embed Multilingual Light v3.0"
+                    model_client.embed_model = "Embed Multilingual Light v3.0"
                     query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
                     query_embedding = np.array(query_embedding)
                     doc_embeddings = np.array(doc_embeddings)
                 except Exception as e:
-                    embed_model = ""
+                    model_client.embed_model = ""
                     print("An error occurred while embedding: ", e)
                     return "error!"
     if query_embedding.size == 0 or doc_embeddings.size == 0:
@@ -64,18 +63,18 @@ def embedding(question, text):
     utils.set_marker()
     print("Reranking...")
     try:
-        rerank_model = "Rerank v3.5"
+        model_client.rerank_model = "Rerank v3.5"
         context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
         utils.clear_screen()
         print("Reranking... Done!")
     except:
         try:
-            rerank_model = "Rerank Multilingual v3.0"
+            model_client.rerank_model = "Rerank Multilingual v3.0"
             context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
             utils.clear_screen()
             print("Reranking... Done!")
         except:
-            rerank_model = ""
+            model_client.rerank_model = ""
             top_k_indices = np.argsort(similarities)[::-1][:3]
             context_parts = []
             for rank, idx in enumerate(top_k_indices, 1):
