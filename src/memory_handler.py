@@ -23,11 +23,17 @@ def memorize_question(question):
     gemini_histories.append({"role": "user", "parts": [{"text": question}]})
     command_histories.append({"role": "user", "content": question})
     if file_handler.gemini_image:
-        model_client.gemini_messages.append({"role": "user","parts": [{"text": question},{"inline_data": file_handler.gemini_image}]})
+        data = []
+        for image in file_handler.gemini_image:
+            data.append({"inline_data": image})
+        model_client.gemini_messages.append({"role": "user","parts": [{"text": question}] + data})
     else:
         model_client.gemini_messages.append({"role": "user", "parts": [{"text": question}]})
     if file_handler.command_image:
-        model_client.command_messages.append({"role": "user", "content": [{"type": "text","text": question},{"type": "image_url","image_url": {"url": file_handler.command_image,"detail": "high"}}]})
+        data = []
+        for image in file_handler.command_image:
+            data.append({"type": "image_url","image_url": {"url": image,"detail": "high"}})
+        model_client.command_messages.append({"role": "user", "content": [{"type": "text","text": question}] + data})
     else:
         model_client.command_messages.append({"role": "user", "content": question})
 

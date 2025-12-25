@@ -1,11 +1,11 @@
 # 設計理念與技術決策
 ## 選用Gemini及Cohere的原因
 - Gemini: 整體較聰明，答案較完整，為整體核心
-- Cohere: 成本低，速度快，可作為second opinion來源
+- Command: 成本低，速度快，可作為second opinion來源
 - 兩者皆支援文件讀取，圖片輸入，思考模式，系統指示，etc.
 - 兩者都沒有限制使用次數，僅限制rate-limit
 ## 融合策略
-- 串流生成: Gemini相較於Cohere，答案通常較完整，因此讓Gemini先生成簡答
+- 串流生成: Gemini相較於Command，答案通常較完整，因此讓Gemini先生成簡答
 - 自動整合: 由Gemini做回覆的合併，產生最終版本
 ## API Key 安全策略
 - 不保留、不上傳 key

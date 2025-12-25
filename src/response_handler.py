@@ -7,12 +7,11 @@ from src import utils
 import threading
 import time
 thought_start = None
-image = ""
-document = ""
+image = []
+document = []
 context = ""
 
 def handle_conversation(question):
-    global image, document
     try:
         utils.clear_all()
         print (f"You: {question}\n\n-------------------------\n")
@@ -25,14 +24,14 @@ def handle_conversation(question):
         else:
             if question[0] == "$":  # Enable file reading
                 utils.set_marker()
-                image, document = file_handler.get_file()
+                file_handler.get_file()
             if question[0] == "@":  # Enable reasoning
                 print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
             get_response(question)
         utils.set_marker()
 
     except Exception as e:
-        print("API Key invalid / An error occurred: ", e)
+        print(f'API Key invalid / An error occurred: {e}')
 
 def get_response(question):
     global context
@@ -52,6 +51,7 @@ def get_response(question):
     generate_response(question)
     if not file_handler.skip_gemini and not file_handler.skip_command:
         response = model_client.merged_response
+        utils.clear_all()  # clears the warning about thought signature, since google did NOT explain in their docs how am i supposed to receive and resent it
         if model_client.embed_model and model_client.rerank_model:
             print (f"You: {question}\n\n-------------------------\n\n{model_client.merged_response}\n\n-------------------------\n\nThought for {model_client.gemini_merge_end_thinking} seconds in total, took {model_client.gemini_end_merging} seconds to merge the answers, generated {len(model_client.merged_response)} tokens.\nEmbedded using {model_client.embed_model}, reranked using {model_client.rerank_model}.\nGenerated response using model {model_client.gemini_model} and {model_client.command_model}, merged using {model_client.gemini_merge_model}.\n\n-------------------------\n")
         elif model_client.embed_model:
@@ -102,7 +102,7 @@ def generate_response(question):
             print(f"Command thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} tokens.\nEmbedded using {model_client.embed_model}, generated response using model {model_client.command_model}.\n\n-------------------------\n")
         else:
             print(f"Command thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} tokens, using model {model_client.command_model}.\n\n-------------------------\n")
-    # exit() # to test if the program works before merging
+    if file_handler.skip_gemini and file_handler.skip_command: print(f"The image types you provided are partially unsupported by each model!\n\n-------------------------\n")
     if not file_handler.skip_gemini and not file_handler.skip_command:
         t3 = threading.Thread(target=model_client.merge_responses, args=(question,))
         t3.start()

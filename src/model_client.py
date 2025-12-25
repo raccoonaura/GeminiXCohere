@@ -115,7 +115,7 @@ def ask_gemini(question):
                                                 try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
                                                     gemini_model = "Gemini 2.0 Flash Lite"
                                                     generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
-                                                except Exception as e: print("Gemini API Key invalid / An error occurred: ", e)
+                                                except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
     gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
     gemini_end_generating = f"{time.perf_counter() - gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
@@ -145,7 +145,7 @@ def ask_command(question):
                     try:  # Command R, fallback if R+ is not available, doesn't support reasoning
                         command_model = "Command R"
                         generate_handler.command_generate("command-r-08-2024", "disabled")
-                    except Exception as e: print("Cohere API Key invalid / An error occurred: ", e)
+                    except Exception as e: print(f'Cohere API Key invalid / An error occurred: {e}')
     command_end_generating = f"{time.perf_counter() - command_start_generating:.3f}"
     if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
@@ -205,7 +205,7 @@ def merge_responses(question):
                             try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
                                 gemini_merge_model = "Gemini 2.0 Flash Lite"
                                 generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
-                            except Exception as e: print("Gemini API Key invalid / An error occurred: ", e)
+                            except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
     gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
     gemini_end_merging = f"{time.perf_counter() - gemini_start_merging:.3f}"
     merged_response = response.text

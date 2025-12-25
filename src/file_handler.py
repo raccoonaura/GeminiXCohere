@@ -1,3 +1,4 @@
+from src import response_handler
 from src import utils
 import mimetypes
 import base64
@@ -6,8 +7,8 @@ import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
-gemini_image = None
-command_image = None
+gemini_image = []
+command_image = []
 skip_gemini = False
 skip_command = False
 doc_types = [".rtf",  # ik this is more of a text file but hey its libreoffice handling it
@@ -22,6 +23,8 @@ doc_types = [".rtf",  # ik this is more of a text file but hey its libreoffice h
              ".pptx", ".potx",
              ".pptm", ".potm",
              ".ppt", ".pot"]
+             # all these file types are supposed to be supported as theyre all listed in libreoffices own docs
+             # if theyre not, its their fault (at least very likely, unless im tweaking)
 
 def get_file():
     files = os.listdir("embeds")
@@ -30,8 +33,8 @@ def get_file():
         print(f"Error! There's no file in the embeds folder!")
         return None
 
-    files = [f for f in files 
-            if os.path.isfile(os.path.join("embeds", f)) 
+    files = [f for f in files
+            if os.path.isfile(os.path.join("embeds", f))
             and any(f.endswith(ext) for ext in doc_types + [".txt", ".md", ".markdown",
                                                             ".html", ".htm", ".epub", ".pdf",
                                                             ".png", ".jpg", ".jpeg", ".webp",
@@ -42,8 +45,8 @@ def get_file():
 
     utils.set_marker()
 
-    image = "(Not selected)"
-    document = "(Not selected)"
+    image = []
+    document = []
 
     while True:
         try:
@@ -51,26 +54,26 @@ def get_file():
             for i, filename in enumerate(files, 1):
                 print(f"└ {i}. {filename}")
 
-            print(f'\nImage: {image}, Document: {document}\n(Type "done" to finish selecting.)')
+            print(f'\nImage: {"(Not selected)" if image == [] else ", ".join(image)}, Document: {"(Not selected)" if document == [] else ", ".join(document)}\n(Type "done" to finish selecting.)')
             choice = input(f'\nSelect the desired file (1~{len(files)}): ').strip()
             if choice == "done":
-                if image == "(Not selected)": image = ""
-                if document == "(Not selected)": document = ""
                 utils.clear_screen()
-                return image, document
+                response_handler.document = document
+                response_handler.image = image
+                return
             choice = int(choice)
             name, ext = os.path.splitext(files[choice - 1])
             if 1 <= choice <= len(files):
                 if ext.lower() in [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif"]:
-                    if image == files[choice - 1]:
-                        image = "(Not selected)"
+                    if files[choice - 1] in image:
+                        image.remove(files[choice - 1])
                     else:
-                        image = files[choice - 1]
+                        image.append(files[choice - 1])
                 else:
-                    if document == files[choice - 1]:
-                        document = "(Not selected)"
+                    if files[choice - 1] in document:
+                        document.remove(files[choice - 1])
                     else:
-                        document = files[choice - 1]
+                        document.append(files[choice - 1])
                 utils.clear_screen()
             else:
                 utils.clear_screen()
@@ -78,27 +81,25 @@ def get_file():
             utils.clear_screen()
             continue
 
-def handle_image(file):
+def handle_image(files):
     global gemini_image, command_image, skip_gemini, skip_command
     skip_gemini = False
     skip_command = False
-    path = "embeds/" + file
-    mime_type, _ = mimetypes.guess_type(path)
-    with open(path, 'rb') as f: image_bytes = f.read()
-    encoded_string = base64.b64encode(image_bytes).decode("utf-8")
-    name, ext = os.path.splitext(file)
-    if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
-        gemini_image = {"mime_type":mime_type, "data": image_bytes}
-        command_image = f"data:{mime_type};base64,{encoded_string}"
-    elif ext.lower() in [".heic", ".heif"]:
-        gemini_image = {"mime_type":mime_type, "data": image_bytes}
-        skip_command = True
-    elif ext.lower() in ".gif":
-        command_image = f"data:{mime_type};base64,{encoded_string}"
-        skip_gemini = True
-    else:
-        gemini_image = None
-        command_image = None
+    for file in files:
+        path = "embeds/" + file
+        mime_type, _ = mimetypes.guess_type(path)
+        with open(path, 'rb') as f: image_bytes = f.read()
+        encoded_string = base64.b64encode(image_bytes).decode("utf-8")
+        name, ext = os.path.splitext(file)
+        if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
+            gemini_image.append({"mime_type":mime_type, "data": image_bytes})
+            command_image.append(f"data:{mime_type};base64,{encoded_string}")
+        elif ext.lower() in [".heic", ".heif"]:
+            gemini_image.append({"mime_type":mime_type, "data": image_bytes})
+            skip_command = True
+        elif ext.lower() in ".gif":
+            command_image.append(f"data:{mime_type};base64,{encoded_string}")
+            skip_gemini = True
 
 def chunk_by_sentence(text, max_length, overlap):  # 我決定把每一句留下中文註解 因為我自己都快亂了:P
     """ max_length: 用字數計算, overlap: 用句數計算,

@@ -24,21 +24,25 @@ def reset_temp():
         shutil.rmtree(TEMP_DIR)
     os.makedirs(TEMP_DIR)
 
-def handle_document(file):
+def handle_document(files):
     utils.set_marker()
     print("Converting...")
-    path = "embeds/" + file
-    name, ext = os.path.splitext(path)
-    if ext.lower() in ["txt", ".md", ".markdown"]:
-        with open(path, "r", encoding="utf-8") as f: text = f.read()
-    elif ext.lower() in [".epub"]: text = epub_to_md(path)
-    elif ext.lower() in [".pdf"]: text = pdf_to_md(path)
-    elif ext.lower() in [".html", ".htm"]: text = html_to_md(path)
-    elif ext.lower() in file_handler.doc_types: text = html_to_md(file_to_html(path))
-    if text is "error!": return "error!"
+    text = []
+    for file in files:
+        path = "embeds/" + file
+        # print(f'Converting {path}')  # debug
+        name, ext = os.path.splitext(path)
+        if ext.lower() in ["txt", ".md", ".markdown"]:
+            with open(path, "r", encoding="utf-8") as f: text.append(f.read())
+        elif ext.lower() in [".epub"]: text.append(epub_to_md(path))
+        elif ext.lower() in [".pdf"]: text.append(pdf_to_md(path))
+        elif ext.lower() in [".html", ".htm"]: text.append(html_to_md(path))
+        elif ext.lower() in file_handler.doc_types: text.append(html_to_md(file_to_html(path)))
+        if "error!" in text: return "error!"
     utils.clear_screen()
     print("Converting...Done!")
-    return text
+    # with open("debug_output.txt", "w", encoding="utf-8") as f: f.write("\n\n".join(text))  # debug
+    return "\n\n".join(text)
 
 def file_to_html(path):
     print("Might take a while if the file contains multiple images!")
