@@ -1,21 +1,86 @@
 from google.genai import types
 from src import embedding_handler
-from src import file_handler
 from src import model_client
 from src import utils
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import re
+
+def chunk_by_sentence(text, max_length, overlap):  # 我決定把每一句留下中文註解 因為我自己都快亂了:P
+    """ max_length: 用字數計算, overlap: 用句數計算,
+        sentences: 切斷後的本文, 含全部的句子, sentence: 本文切段後的一個句子,
+        current_chunk: 一個段落, 好幾個句子, chunks: 切段並重新安排後的好幾個段落,
+        tail: 上一個段落的尾端幾句, """
+
+    sentences = re.split(r'(?<=[。！？.!?…])\s*', text)  # 遇到。！？.!?…這些符號之一就切成一句
+    sentences = [s.strip() for s in sentences if s.strip()]  # 避免符號單獨一句
+
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    i = 0
+    while i < len(sentences):  # while現在確認的句數不超過全部句子的總數時
+        sentence = sentences[i]  # 現在這句就是全部句子中的第i個
+
+        if sentence.lstrip().startswith("#"):  # 如果這句是以#開頭
+            if current_chunk:  # 如果current_chunk不是空的
+                chunks.append(" ".join(current_chunk))  # 把current_chunk加入chunks裡
+            current_chunk = [sentence]  # 全新的current_chunk加入含#的那句
+            current_length = len(sentence)  # 把這句的字數設為總長度
+            i += 1  # 換下一句
+            continue
+
+        if current_length + len(sentence) > max_length:  # 如果current_chunk新的總長度加上現在這句的字數"會"超過上限
+            if current_chunk:  # 如果current_chunk不是空的
+                chunks.append(" ".join(current_chunk))  # 把current_chunk加入chunks裡
+
+                if len(current_chunk) > overlap:  # 如果現在的current_chunk包含的句數比overlap所保留的句數還多的時候
+                    tail = current_chunk[-overlap:]  # 從尾部取出overlap所保留的句數, 保留起來
+                else:  # 如果現在的current_chunk包含的句數跟overlap所保留的句數一樣多或更少的時候
+                    tail = current_chunk[:]  # 把整段current_chunk全部保留下來
+
+                while tail:  # 當tail存在時
+                    tail_length = sum(len(s) for s in tail)  # 算出tail裡每一句的字數加總
+                    if tail_length + len(sentence) <= max_length:  # 如果總字數加上這句的字數不會超過上限
+                        break  # 離開這個迴圈
+                    tail.pop(0)  # 把tail的第一句刪了, 然後回到這個迴圈的開頭再確認一次會不會超過次數
+
+                current_chunk = tail  # 全新的current_chunk加入overlap的部分
+                current_length = sum(len(s) for s in tail)  # 算字數
+
+            if current_length + len(sentence) <= max_length:  # 如果current_chunk新的總長度加上現在這句的字數"不會"超過上限
+                current_chunk.append(sentence)  # 把這句加入current_chunk
+                current_length += len(sentence)  # 把這句的字數加入總長度
+                i += 1
+                continue
+
+            else:  # 如果還是超過的話
+                if current_chunk:  # 如果current_chunk不是空的
+                    chunks.append(" ".join(current_chunk))  # 把current_chunk加入chunks裡
+                current_chunk = [sentence]  # 全新的current_chunk加入這句
+                current_length = len(sentence)  # 把這句的字數設為總長度
+                i += 1
+                continue
+
+        else:  # 句子不是用#開頭 且字數沒有超過上限
+            current_chunk.append(sentence)  # 把這句加入current_chunk
+            current_length += len(sentence)  # 把這句的字數加入總長度
+            i += 1  # 換下一句
+    if current_chunk:  # 如果current_chunk不是空的
+        chunks.append(" ".join(current_chunk))  # 保存跑完全部後的最後一個current_chunk
+    return chunks
 
 def embedding(question, text):
     if text == "error!": return "error!"
     question = question[1:]
     utils.set_marker()
     print("Chunking...")
-    chunks = file_handler.chunk_by_sentence(text, 500, 2)
+    letters = 300
+    chunks = chunk_by_sentence(text, letters, 2)
     allchunks = [question] + chunks
-    if len(allchunks) > 100:
-        print("The document is too long!")
-        return "error!"
+    while len(allchunks) > 100 and letters <= 700:
+        letters += 100
+        chunks = chunk_by_sentence(text, letters, 2)
     utils.clear_screen()
     print("Chunking... Done!")
     utils.set_marker()

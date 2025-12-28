@@ -116,7 +116,6 @@ def ask_gemini(question):
                                                     gemini_model = "Gemini 2.0 Flash Lite"
                                                     generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
                                                 except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
-    gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
     gemini_end_generating = f"{time.perf_counter() - gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
 

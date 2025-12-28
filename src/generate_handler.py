@@ -1,9 +1,44 @@
 from google.genai import types
+from src import spreadsheet_handler
 from src import response_handler
+from src import memory_handler
 from src import file_handler
 from src import model_client
 from src import utils
 import time
+
+gemini_sql_query = {
+    "name": "sql_query",
+    "description": "Executes a SQL SELECT query to retrieve data from the SQLite database. Returns query results in JSON format. Only accepts SELECT statements; cannot execute INSERT, UPDATE, DELETE, or other data modification operations. Must use exact table and column names as defined in the database schema (case-sensitive).",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "A complete SQL SELECT statement to execute. Must: 1) Use correct table and column names exactly as defined in the schema (case-sensitive), 2) Follow standard SQL syntax, 3) Only contain SELECT queries. Example: 'SELECT first_name, last_name, age FROM employees WHERE age > 30 ORDER BY age DESC LIMIT 10'"
+            }
+        },
+        "required": ["query"]
+    }
+}
+
+command_sql_query = {
+    "type": "function",
+    "function": {
+        "name": "sql_query",
+        "description": "Executes a SQL SELECT query to retrieve data from the SQLite database. Returns query results in JSON format. Only accepts SELECT statements; cannot execute INSERT, UPDATE, DELETE, or other data modification operations. Must use exact table and column names as defined in the database schema (case-sensitive).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "A complete SQL SELECT statement to execute. Must: 1) Use correct table and column names exactly as defined in the schema (case-sensitive), 2) Follow standard SQL syntax, 3) Only contain SELECT queries. Example: 'SELECT first_name, last_name, age FROM employees WHERE age > 30 ORDER BY age DESC LIMIT 10'"
+                }
+            },
+            "required": ["query"]
+        }
+    }
+}
 
 def gemini_generate(model, boolean):
     utils.set_marker()
@@ -20,7 +55,8 @@ def gemini_generate(model, boolean):
                 # in that case, "medium" will work
                 include_thoughts = boolean
             ),
-            system_instruction = response_handler.context
+            system_instruction = response_handler.context,
+            # tools = types.Tool(function_declarations=[gemini_sql_query])
         )
     else:
         config = types.GenerateContentConfig(
@@ -36,21 +72,23 @@ def gemini_generate(model, boolean):
                 # regarding 2.5 Pro in google ai studio
                 include_thoughts = boolean
             ),
-            system_instruction = response_handler.context
+            system_instruction = response_handler.context,
+            # tools = [types.Tool(function_declarations=[gemini_sql_query])]
         )
+    calls = []
     for chunk in model_client.client.models.generate_content_stream(
         model = model,
         contents = model_client.gemini_messages,
         config = config
     ):
+        if chunk.function_calls:
+            calls.extend(chunk.function_calls)
         for part in chunk.candidates[0].content.parts:
-            if not part.text:
-                continue
-            elif part.thought:
+            if part.thought:
                 if boolean:
                     utils.clear_screen()
                     print(part.text)
-            else:
+            if part.text:
                 if model_client.gemini_thought is False:
                     if boolean:
                         utils.clear_screen()
@@ -59,19 +97,50 @@ def gemini_generate(model, boolean):
                     model_client.gemini_start_generating = time.perf_counter()
                 print(part.text, end="")  # Real-time printing since the merged response can take a while
                 model_client.full_response.append(part.text)
+    model_client.gemini_response = ''.join(model_client.full_response)  # Join all chunks into a single string for logging and further processing
+    if calls:
+        for call in calls:
+            if (call.name == "sql_query"):
+                result = spreadsheet_handler.sql_query(call.args["query"])
+                function_response = types.Part.from_function_response(
+                    name=call.name,
+                    response={"result": result}
+                )
+                model_client.gemini_messages
+        for chunk in model_client.client.models.generate_content_stream(
+            model = model,
+            contents = [model_client.gemini_messages, function_response],
+            config = config
+        ):
+            for part in chunk.candidates[0].content.parts:
+                if part.thought:
+                    if boolean:
+                        utils.clear_screen()
+                        print(part.text)
+                if part.text:
+                    if model_client.gemini_thought is False:
+                        if boolean:
+                            utils.clear_screen()
+                        model_client.gemini_thought = True
+                        model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
+                        model_client.gemini_start_generating = time.perf_counter()
+                    print(part.text, end="")  # Real-time printing since the merged response can take a while
+                    model_client.full_response.append(part.text)
 
 def command_generate(model, value):
     if response_handler.context:
         res = model_client.co.chat_stream(
             model = model,
             messages = model_client.command_messages + [{"role": "system", "content": response_handler.context}],
-            thinking = {"type": value}
+            thinking = {"type": value},
+            # tools=[gemini_sql_query]
         )
     else:
         res = model_client.co.chat_stream(
             model = model,
             messages = model_client.command_messages,
-            thinking = {"type": value}
+            thinking = {"type": value},
+            # tools=[gemini_sql_query]
         )
     for event in res:
         if event.type == "content-delta":
@@ -89,16 +158,33 @@ def command_generate(model, value):
                 model_client.command_response += chunk
 
 def gemini_merge(model, boolean):
+    instruction = f"""
+You're a helpful assistant for merging two LLM's responses
+Merge both responses into one comprehensive answer
+1. Use the longer response as foundation
+2. Integrate unique points from the shorter one
+3. Add relevant insights both responses missed
+4. Do not include any preamble, headers, or concluding remarks
+5. Start the response immediately with the integrated content
+
+Response 1:
+{model_client.gemini_response}
+
+Response 2:
+{model_client.command_response}
+
+{response_handler.context}
+"""
     if model == "gemini-3.0-pro" or model == "gemini-3.0-flash":
         config = types.GenerateContentConfig(
-                    thinking_level="high" if boolean else "medium",
-                    system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer.\n\nResponse 1: \n\n" + model_client.gemini_response + "\n\nResponse 2: \n\n" + model_client.command_response + "\n\n" + response_handler.context
-                )
+                    thinking_level = "high" if boolean else "medium",
+                    system_instruction = instruction
+        )
     else:
         config = types.GenerateContentConfig(
-                    thinking_config=types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
-                    system_instruction="Merge both responses into one comprehensive answer:\n- Use the longer response as foundation\n- Integrate unique points from the shorter one\n- Add relevant insights both responses missed\n\nOutput only the final merged answer.\n\nResponse 1: \n\n" + model_client.gemini_response + "\n\nResponse 2: \n\n" + model_client.command_response + "\n\n" + response_handler.context
-                )
+                    thinking_config = types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
+                    system_instruction = instruction
+        )
     response = model_client.client.models.generate_content(
         model = model,
         contents = model_client.merged_messages,

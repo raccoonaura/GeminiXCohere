@@ -3,13 +3,9 @@ from src import utils
 from ebooklib import epub
 from pathlib import Path
 import pdfplumber
-import subprocess
 import html2text
 import ebooklib
-import shutil
 import os
-
-TEMP_DIR = "embeds/temp"
 
 handler = html2text.HTML2Text()
 handler.ignore_links = True  # 避免連結把chunking搞砸 因為Gemini一次只能發100個chunks
@@ -19,64 +15,25 @@ handler.skip_internal_links = True  # 不保留傳送到HTML某一部分的連�
 handler.bypass_tables = False  # 保留表格
 handler.body_width = 0  # 不自動換行 保留HTML原本的換行
 
-def reset_temp():
-    if os.path.exists(TEMP_DIR):
-        shutil.rmtree(TEMP_DIR)
-    os.makedirs(TEMP_DIR)
-
 def handle_document(files):
     utils.set_marker()
     print("Converting...")
     text = []
     for file in files:
         path = "embeds/" + file
-        # print(f'Converting {path}')  # debug
         name, ext = os.path.splitext(path)
-        if ext.lower() in ["txt", ".md", ".markdown"]:
+        if ext.lower() in [".txt", ".md", ".markdown"]:
             with open(path, "r", encoding="utf-8") as f: text.append(f.read())
         elif ext.lower() in [".epub"]: text.append(epub_to_md(path))
         elif ext.lower() in [".pdf"]: text.append(pdf_to_md(path))
         elif ext.lower() in [".html", ".htm"]: text.append(html_to_md(path))
-        elif ext.lower() in file_handler.doc_types: text.append(html_to_md(file_to_html(path)))
+        elif ext.lower() in file_handler.doc_types:
+            print("Might take a while if the file contains multiple images!")
+            text.append(html_to_md(file_handler.file_to_libreoffice(path, "html")))
         if "error!" in text: return "error!"
     utils.clear_screen()
     print("Converting...Done!")
-    # with open("debug_output.txt", "w", encoding="utf-8") as f: f.write("\n\n".join(text))  # debug
     return "\n\n".join(text)
-
-def file_to_html(path):
-    print("Might take a while if the file contains multiple images!")
-    path = Path(path)
-    reset_temp()
-    candidates = [  # 一系列LibreOffice通常會有的名字/檔案位置
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        "soffice",  # for linux (probably, i dont really use use linux)
-        "libreoffice",
-    ]
-    for c in candidates:  # 找到LibreOffice的位置
-        if Path(c).exists():
-            soffice = c
-            break
-
-    if soffice is None:  # 確認LibreOffice是否存在
-        return RuntimeError("LibreOffice not found! Please install it before continuing!")
-    cmd = [  # 指令
-        soffice,
-        "--headless",
-        "--convert-to", "html",
-        "--outdir", str(TEMP_DIR),
-        str(path),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)  # 跑上面的指令
-    if result.returncode != 0:  # 如果成功的話 系統應回傳0
-        return RuntimeError(
-            f"Failed while converting files with LibreOffice! Please make sure you have it installed and is able to run {soffice} in cmd!\n"
-            f"cmd: {' '.join(cmd)}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-        )
-    for f in Path(TEMP_DIR).glob("*"):
-        if f.is_file() and f.suffix.lower() != ".html": f.unlink()  # 刪除HTML以外的東西 (通常是圖片)
-    return TEMP_DIR + "/" + (path.stem + ".html")
 
 def html_to_md(path):
     if path is RuntimeError: return "error!"

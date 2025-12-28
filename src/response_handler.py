@@ -1,3 +1,4 @@
+from src import spreadsheet_handler
 from src import embedding_handler
 from src import document_handler
 from src import memory_handler
@@ -9,6 +10,7 @@ import time
 thought_start = None
 image = []
 document = []
+spreadsheet = []
 context = ""
 
 def handle_conversation(question):
@@ -37,10 +39,15 @@ def get_response(question):
     global context
     if question[0] == "$":
         if image: file_handler.handle_image(image)
+        context = ""
+        if spreadsheet:
+            context = spreadsheet_handler.handle_spreadsheets(spreadsheet)
+            if context == "error!": return
         if document:
-            context = embedding_handler.embedding(question, document_handler.handle_document(document))
-            if context == "error!":
-                return
+            pre_context = embedding_handler.embedding(question, document_handler.handle_document(document))
+            if pre_context == "error!": return
+            if spreadsheet: context += pre_context
+            else: context = pre_context
             if question[1] == "@":  # Enable reasoning
                 print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
             else:
