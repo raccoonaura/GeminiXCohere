@@ -11,15 +11,16 @@
 - 多回合對話 (記憶系統)
 - 快取系統 (Cache)
 - 思考模式 (Reasoning)
-- 檔案檢索 (RAG / 圖片讀取)
-- RAG支援多種檔案類型
+- 圖片理解 (Image Understanding)
+- 檔案檢索 (文檔 / Text-to-SQL RAG)
+- RAG 支援多種檔案類型
 - CoT 內容顯示 (Chain-of-Thought)
 
 ## 環境需求
 - Python 3.13.x
 - 必要套件：請參考 `requirements.txt`
-- Gemini及Cohere的API Key
-- 若使用RAG時需要更多檔案類型的支援，請安裝[LibreOffice](https://www.libreoffice.org/download/download-libreoffice/)，**請安裝於其預設安裝位置**
+- Gemini 及 Cohere 的 API Key
+- 若使用 RAG 時需要更多檔案類型的支援，請安裝[LibreOffice](https://www.libreoffice.org/download/download-libreoffice/)，**請安裝於其預設安裝位置**
 
 ## 專案架構
 - README.md: 主入口說明

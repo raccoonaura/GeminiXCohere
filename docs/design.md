@@ -12,9 +12,9 @@
 - 使用者自行輸入並管理，避免配額消耗與安全風險
 ## 快取策略
 - 近似 (90%+) / 相同prompt命中提示cached
-## RAG策略
+## 文檔 RAG 策略
 - 偵測embeds檔案類型
-- 根據檔案類型，可能先轉換為HTML檔，最後都會轉換到String
+- 根據檔案類型，統一轉換為String (Markdown語法)
 - 在embeds裡搜尋與輸入相似的檔案
 - 全文遇到。！？.!?…等標點符號時進行分行
 - 將區塊加入分段後的句子，直到超出字數上限500字，或遇到以#開頭的句子
@@ -25,3 +25,8 @@
 - 以cosine計算向量相似度，產生十個top-k
 - 將這些top-k進行rerank，產生三個新的top-k
 - 將新的top-k以系統訊息給予模型以回答問題
+## Text-to-SQL RAG 流程
+- 偵測embeds檔案類型
+- 根據檔案類型，統一轉換為DataFrame
+- 將DataFrame儲存到暫時的database裡
+- 讓Gemini使用函式呼叫來尋找prompt要求的答案

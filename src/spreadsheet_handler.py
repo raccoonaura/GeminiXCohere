@@ -11,7 +11,7 @@ common_xpaths = ["//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWX
                  "//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'record')]",
                  "//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'entry')]",
                  "//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'data')]",
-                 "./*"]  # ik this looks random but what it does is basically
+                 "empty"]  # ik this looks random but what it does is basically
                          # to see if the word is included in any position and
                          # uppercase will be seen as lowercase, so it detects
                          # almost every possible variants of the word, from
@@ -19,6 +19,11 @@ common_xpaths = ["//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWX
                          # and if nothing was matched it gon use anything available
 
 def handle_spreadsheets(files):
+    file_handler.skip_command = True
+    # first, theres no point to search the exact same file twice
+    # say, if youre asking the models opinions on the documents, it makes sense to have both model running for rag
+    # but i couldnt think of an instance of anyone wanting to ask for different answers based on a damn spreadsheet
+    # second, i cant be FUCKING BOTHERED to fuck around with function calling anymore
     for file in files:
         path = "embeds/" + file
         name, ext = os.path.splitext(file)
@@ -28,8 +33,8 @@ def handle_spreadsheets(files):
             df = pd.read_excel(path, sheet_name=None, parse_dates=True)
         elif ext.lower() in [".xlt"]:  # xls範本
             df = pd.read_excel(file_handler.file_to_libreoffice(path, "xls"), sheet_name=None, parse_dates=True)
-        elif ext.lower() in [".ots", "fods"]:  # ods範本和扁平化版
-            df = pd.read_excel(file_handler.file_to_libreoffice(path, "ods"), sheet_name=None)
+        elif ext.lower() in [".ots", ".fods"]:  # ods範本和扁平化版
+            df = pd.read_excel(file_handler.file_to_libreoffice(path, "ods"), sheet_name=None, parse_dates=True)
         elif ext.lower() in [".csv"]:
             df = pd.read_csv(path, sep=",", on_bad_lines="warn", parse_dates=True)
         elif ext.lower() in [".tsv"]:  # 跟csv一模一樣 只不過是換行從用逗號變成用Tab而已
@@ -39,7 +44,12 @@ def handle_spreadsheets(files):
             tags = set()  # 合集 跟list一樣 只是沒有排序 也不會有重複的物品
             for elem in root.iter(): tags.add(elem.tag)  # 如果你願意一層一層一層的剝開xml檔 把每個找到的不同標籤加進合集裡
             for xpath in common_xpaths:  # 嘗試每一個常見的XPath
-                if xpath in tags: df = pd.read_xml(path, xpath=xpath, parse_dates=True)  # 中獎的話就用那個找資料
+                if xpath == "empty":
+                    df = pd.read_xml(path, parse_dates=True)
+                    break
+                elif xpath in tags:
+                    df = pd.read_xml(path, xpath=xpath, parse_dates=True)
+                    break  # 中獎的話就用那個找資料
         elif ext.lower() in [".json"]:
             with open(path, "r", encoding="utf-8") as f: df = pd.json_normalize(json.load(f))  # 把巢狀json扁平化 接著做跟read_json一樣的事
         elif ext.lower() in [".yaml"]:  # pandas不支援這個東東 fair因為我這輩子沒看過這種檔案類型
@@ -48,8 +58,9 @@ def handle_spreadsheets(files):
         datas = []
         if isinstance(df, dict):
             for sheet_title, sheet_df in df.items():
+                if sheet_title: sheet_title = name + "_" + sheet_title + ext
+                else: sheet_title = file  # fixes yaml
                 data = []
-                sheet_title = name + "_" + sheet_title + ext
                 sheet_df.to_sql(sheet_title, sqlite3.connect("embeds/temp/database.db"), if_exists="replace")
                 for col in sheet_df.columns:  # 在dataframe裡一行一行掃描 儲存那行的名稱 儲存的資料類型(str, datetime, etc.) 還有前面三行是什麼
                     data.append({"name": col, "datatype": str(sheet_df[col].dtype), "example": sheet_df[col].head(3).tolist()})
@@ -79,4 +90,5 @@ The following metadata describes the available tables and their structures:
     raise SystemExit(0)  # debug
 
 def sql_query(query: str):
+    """Run a SQL SELECT query on a SQLite database and return the results."""
     return pd.read_sql_query(query, sqlite3.connect("embeds/temp/database.db")).to_dict(orient="records")

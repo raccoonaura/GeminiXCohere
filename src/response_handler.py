@@ -41,7 +41,8 @@ def get_response(question):
         if image: file_handler.handle_image(image)
         context = ""
         if spreadsheet:
-            context = spreadsheet_handler.handle_spreadsheets(spreadsheet)
+            try: context = spreadsheet_handler.handle_spreadsheets(spreadsheet)
+            except Exception as e: print(e)
             if context == "error!": return
         if document:
             pre_context = embedding_handler.embedding(question, document_handler.handle_document(document))

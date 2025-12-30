@@ -31,5 +31,7 @@ python main.py
 - 程式本身支援以下檔案
     - 文檔: .**txt**, .**md**/.**markdown**, .**pdf**, .**html**/.**htm**, .**epub**
     - 圖片: .**png**, .**jpg**/.**jpeg**, .**webp**, .**heic**, .**heif**, .**gif**
+    - 資料: .**xlsx**, .**xlsm**, .**xltx**, .**xltm**, .**xls**, .**xlsb**, .**odf**, .**ods**, .**odt**, .**csv**, .**tsv**, .**xml**, .**json**, .**yaml**
 - 若LibreOffice已安裝 會延伸支援以下檔案:
     - 文檔: .**rtf**, .**odt**, .**ott**, .**fodt**, .**odp**, .**otp**, .**fodp**, .**odm**, .**oth**, .**sxw**, .**stw**, .**sxg**, .**sxi**, .**sti**, .**docx**, .**dotx**, .**docm**, .**dotm**, .**doc**, .**dot**, .**pptx**, .**potx**, .**pptm**, .**potm**, .**ppt**, .**pot**
+    - 資料: .**ots**, .**fods**, .**xlt**

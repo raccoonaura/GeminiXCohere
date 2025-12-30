@@ -2,7 +2,7 @@
 ## 模型呼叫流程
 1. 使用者輸入prompt
 2. 並行呼叫Gemini及Cohere API
-3. 先顯示Gemini的原始回答(parallel display)
+3. 先顯示Gemini的原始回答
 4. 將兩份回答丟回Gemini → 生成整合版
 5. 將整合版覆蓋原本的答案，顯示在介面
 ## 記憶系統
@@ -24,10 +24,16 @@
 1. 檔案讀取
 2. 根據各模型支援的圖片類型選擇回覆的模型
 3. 將圖片的base64 URI插入prompt
-## RAG 流程
+## 文檔 RAG 流程
 1. 檔案讀取
-2. 文件切塊
-3. Embedding生成
-4. Top-k檢索
-5. 對Top-k的部分進行rerank
-6. 將最相關的檢索結果插入系統指示
+2. 檔案類型轉換
+3. 文件切塊
+4. Embedding生成
+5. Top-k檢索
+6. 對Top-k的部分進行rerank
+7. 將最相關的檢索結果插入系統指示
+## Text-to-SQL RAG 流程
+1. 檔案讀取
+2. 內容轉換為統一格式
+3. 儲存為database
+4. 讓Gemini使用函式呼叫來尋找答案
