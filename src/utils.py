@@ -1,6 +1,9 @@
 import os
 import platform
 
+class Error(Exception):
+    pass
+
 def clear_all():
     if platform.system() == "Windows":
         os.system("cls")

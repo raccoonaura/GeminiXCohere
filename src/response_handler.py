@@ -59,7 +59,6 @@ def get_response(question):
     generate_response(question)
     if not file_handler.skip_gemini and not file_handler.skip_command:
         response = model_client.merged_response
-        utils.clear_all()  # clears the warning about thought signature, since google did NOT explain in their docs how am i supposed to receive and resent it
         if model_client.embed_model and model_client.rerank_model:
             print (f"You: {question}\n\n-------------------------\n\n{model_client.merged_response}\n\n-------------------------\n\nThought for {model_client.gemini_merge_end_thinking} seconds in total, took {model_client.gemini_end_merging} seconds to merge the answers, generated {len(model_client.merged_response)} tokens.\nEmbedded using {model_client.embed_model}, reranked using {model_client.rerank_model}.\nGenerated response using model {model_client.gemini_model} and {model_client.command_model}, merged using {model_client.gemini_merge_model}.\n\n-------------------------\n")
         elif model_client.embed_model:

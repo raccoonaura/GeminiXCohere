@@ -41,7 +41,7 @@ def memorize_response():
     global current_history
     gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
     command_histories.append({"role": "assistant", "content": model_client.merged_response})
-    model_client.gemini_messages.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
+    model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})
     model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
     if not current_history:
         data = {'gemini': gemini_histories, 'command': command_histories}
@@ -139,7 +139,10 @@ def choose_history():
                     model_client.gemini_messages = data['gemini']
                     model_client.command_messages = data['command']
                     return
-            choice = int(choice)
+            if choice.isdigit(): choice = int(choice)
+            else:
+                utils.clear_screen()
+                continue
             if 1 <= choice <= new_chat_number:
                 if choice == new_chat_number:
                     utils.clear_screen()

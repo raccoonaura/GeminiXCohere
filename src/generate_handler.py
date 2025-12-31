@@ -8,6 +8,8 @@ import time
 
 def gemini_generate(model, boolean):
     utils.set_marker()
+    model_client.gemini_parts = []
+    full_response = []
     if model == "gemini-3.0-pro" or model == "gemini-3.0-flash":
         config = types.GenerateContentConfig(
             thinking_config = types.ThinkingConfig(
@@ -48,6 +50,7 @@ def gemini_generate(model, boolean):
         config = config
     ):
         for part in chunk.candidates[0].content.parts:
+            model_client.gemini_parts.append(part)
             if part.thought:
                 if boolean:
                     utils.clear_screen()
@@ -60,8 +63,8 @@ def gemini_generate(model, boolean):
                     model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                     model_client.gemini_start_generating = time.perf_counter()
                 print(part.text, end="")  # Real-time printing since the merged response can take a while
-                model_client.full_response.append(part.text)
-    model_client.gemini_response = ''.join(model_client.full_response)  # Join all chunks into a single string for logging and further processing
+                full_response.append(part.text)
+    model_client.gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
 
 def command_generate(model, value):
     if response_handler.context:
