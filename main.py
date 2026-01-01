@@ -16,16 +16,20 @@ utils.clear_all()
 
 memory_handler.choose_history()
 
-while question.strip() == "":
+while question.strip() == "" or question.strip() == "$@" or question.strip() == "$" or question.strip() == "@":
     utils.clear_all()
-    try: question = input("Hello! How can I assist you today? ")
+    try:
+        question = input("Hello! How can I assist you today? ")
+        if question[0:2].strip() == "@$": question = question[1] + question[0] + question[2:]
     except: continue
 
 while True:
     response_handler.handle_conversation(question)
     question = ""
     utils.set_marker()
-    while question.strip() == "":
+    while question.strip() == "" or question.strip() == "$@" or question.strip() == "$" or question.strip() == "@":
         utils.clear_screen()
-        try: question = input("Your turn: ")
+        try:
+            question = input("Your turn: ")
+            if question[0:2].strip() == "@$": question = question[1] + question[0] + question[2:]
         except: continue

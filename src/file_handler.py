@@ -4,6 +4,7 @@ from src import utils
 from pathlib import Path
 import subprocess
 import mimetypes
+import sqlite3
 import shutil
 import base64
 import os
@@ -49,8 +50,8 @@ def get_file():
     files = os.listdir("embeds")
     files = [f for f in files if not f.startswith('.') and os.path.isfile(os.path.join("embeds", f))]
     if not files:
-        print(f"Error! There's no file in the embeds folder!")
-        return None
+        print(f"Error! There's no file in the embeds folder!\n\n-------------------------\n")
+        return False
 
     files = [f for f in files
             if os.path.isfile(os.path.join("embeds", f))
@@ -59,8 +60,8 @@ def get_file():
                                                                           ".png", ".jpg", ".jpeg", ".webp",
                                                                           ".heic", ".heif", ".gif"])]
     if not files:
-        print(f"Error! None of the files in the embeds folder are supported!")
-        return None
+        print(f"Error! None of the files in the embeds folder are supported!\n\n-------------------------\n")
+        return False
 
     utils.set_marker()
 
@@ -81,7 +82,7 @@ def get_file():
                 response_handler.document = document
                 response_handler.image = image
                 response_handler.spreadsheet = spreadsheet
-                return
+                return True
             choice = int(choice)
             name, ext = os.path.splitext(files[choice - 1])
             if 1 <= choice <= len(files):
@@ -142,8 +143,6 @@ def file_to_libreoffice(path, type):
 
 def handle_image(files):
     global gemini_image, command_image, skip_gemini, skip_command
-    skip_gemini = False
-    skip_command = False
     for file in files:
         path = "embeds/" + file
         mime_type, _ = mimetypes.guess_type(path)

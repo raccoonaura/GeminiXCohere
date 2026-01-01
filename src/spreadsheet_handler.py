@@ -61,13 +61,13 @@ def handle_spreadsheets(files):
                 if sheet_title: sheet_title = name + "_" + sheet_title + ext
                 else: sheet_title = file  # fixes yaml
                 data = []
-                sheet_df.to_sql(sheet_title, sqlite3.connect("embeds/temp/database.db"), if_exists="replace")
+                sheet_df.to_sql(sheet_title, sqlite3.connect("caches/database.db"), if_exists="replace")
                 for col in sheet_df.columns:  # 在dataframe裡一行一行掃描 儲存那行的名稱 儲存的資料類型(str, datetime, etc.) 還有前面三行是什麼
                     data.append({"name": col, "datatype": str(sheet_df[col].dtype), "example": sheet_df[col].head(3).tolist()})
                 datas.append({"table": sheet_title, "columns": data})
         else:
             data = []
-            df.to_sql(file, sqlite3.connect("embeds/temp/database.db"), if_exists="replace")  # 建立一個db檔案來存放dataframe 如果檔案已經存在 取代原本檔案
+            df.to_sql(file, sqlite3.connect("caches/database.db"), if_exists="replace")  # 建立一個db檔案來存放dataframe 如果檔案已經存在 取代原本檔案
             for col in df.columns:  # 在dataframe裡一行一行掃描 儲存那行的名稱 儲存的資料類型(str, datetime, etc.) 還有前面三行是什麼
                 data.append({"name": col, "datatype": str(df[col].dtype), "example": df[col].head(3).tolist()})
             datas = [{"table": file, "columns": data}]
@@ -91,4 +91,4 @@ The following metadata describes the available tables and their structures:
 
 def sql_query(query: str):
     """Run a SQL SELECT query on a SQLite database and return the results."""
-    return pd.read_sql_query(query, sqlite3.connect("embeds/temp/database.db")).to_dict(orient="records")
+    return pd.read_sql_query(query, sqlite3.connect("caches/database.db")).to_dict(orient="records")

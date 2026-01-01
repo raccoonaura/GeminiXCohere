@@ -16,8 +16,10 @@ match = None
 current_history = ""
 gemini_histories = []
 command_histories = []
+gemini_messages_logs = []  # to prevent dumping Part into JSON, fixes "Object of type Part is not JSON serializable" error
 
 def memorize_question(question):
+    global gemini_messages_logs
     if question[0] == "$": question = question[1:]
     if question[0] == "@": question = question[1:]
     gemini_histories.append({"role": "user", "parts": [{"text": question}]})
@@ -27,8 +29,10 @@ def memorize_question(question):
         for image in file_handler.gemini_image:
             data.append({"inline_data": image})
         model_client.gemini_messages.append({"role": "user","parts": [{"text": question}] + data})
+        gemini_messages_logs.append({"role": "user","parts": [{"text": question}] + data})
     else:
         model_client.gemini_messages.append({"role": "user", "parts": [{"text": question}]})
+        gemini_messages_logs.append({"role": "user","parts": [{"text": question}]})
     if file_handler.command_image:
         data = []
         for image in file_handler.command_image:
@@ -38,19 +42,20 @@ def memorize_question(question):
         model_client.command_messages.append({"role": "user", "content": question})
 
 def memorize_response():
-    global current_history
+    global current_history, gemini_messages_logs
     gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
     command_histories.append({"role": "assistant", "content": model_client.merged_response})
+    gemini_messages_logs.append({"role": "model", "parts": model_client.merged_response})
     model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})
     model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
     if not current_history:
-        data = {'gemini': gemini_histories, 'command': command_histories}
+        data = {'gemini': gemini_messages_logs, 'command': command_histories}
         dt = datetime.datetime.now()
         now = dt.strftime('%Y-%m-%d-%H-%M-%S')
         current_history = f'{now}.json'
         with open("histories/" + current_history, 'w', encoding="utf8") as f: json.dump(data, f, ensure_ascii=False)
     else:
-        data = {'gemini': model_client.gemini_messages, 'command': model_client.command_messages}
+        data = {'gemini': gemini_messages_logs, 'command': model_client.command_messages}
         with open("histories/" + current_history, 'w', encoding="utf8") as f: json.dump(data, f, ensure_ascii=False)
 
 def reset_logs():
@@ -69,12 +74,11 @@ def log_interaction(question, gemini_response, command_response, merged_response
         question = question[1:]
     if question[0] == "@":  # Reasoning
         question = question[1:]
-    with open("logs/gemini_log.md", "a", encoding="utf-8") as file:
-        file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
-    with open("logs/command_log.md", "a", encoding="utf-8") as file:
-        file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
-    with open("logs/merged_log.md", "a", encoding="utf-8") as file:
-        file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
+    if model_client.gemini_cot:
+        with open("logs/gemini_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model CoT:" + model_client.gemini_cot + "\n\n====================================================================================================\n\n")
+    with open("logs/gemini_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
+    with open("logs/command_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
+    with open("logs/merged_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
 
 def reset_caches():
     if os.path.exists(CACHES_DIR):
@@ -92,7 +96,7 @@ def read_from_caches(question: str) -> str | None:
     for filename in os.listdir(CACHES_DIR):
         file_path = os.path.join(CACHES_DIR, filename)
         if os.path.isfile(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
                 lines = f.readlines()
                 if not lines:
                     continue

@@ -17,6 +17,7 @@ gemini_parts = []
 gemini_response = ""
 command_response = ""
 merged_response = ""
+gemini_cot = ""
 gemini_thought = False
 command_thought = False
 gemini_end_thinking = None
@@ -59,9 +60,10 @@ def initialize_cohere():
         except Exception as e: co = None  # KeyboardInterrupt check
 
 def ask_gemini(question):
-    global gemini_messages, gemini_response, gemini_thought, gemini_end_thinking, gemini_start_generating, gemini_end_generating, gemini_model
+    global gemini_messages, gemini_response, gemini_cot, gemini_thought, gemini_end_thinking, gemini_start_generating, gemini_end_generating, gemini_model
+    gemini_cot = ""
     gemini_thought = False
-    # for some FUCKING reasons, Gemini 2.0 is called 2.0, Gemini 3 is called 3???????
+    # for some reason, Gemini 2.0 is called 2.0, Gemini 3 is called 3???????
     try:  # Gemini 3 Pro, it doesn't support NO reasoning
         if response_handler.spreadsheet: raise utils.Error("Skipping Gemini 3 for TAG")
         # for some reason, at least for this project,

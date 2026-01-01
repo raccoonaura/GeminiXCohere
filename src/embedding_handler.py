@@ -119,9 +119,7 @@ def embedding(question, text):
     print("Calculating...")
 
     similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
-    if len(allchunks) >= 10: top_ks = 10
-    else: top_ks = len(allchunks)
-    top_k_indices = np.argsort(similarities)[::-1][:top_ks]
+    top_k_indices = np.argsort(similarities)[::-1][:min(10, len(allchunks))]
     top_k_results = [chunks[i] for i in top_k_indices]
     utils.clear_screen()
     print("Calculating... Done!")
@@ -146,9 +144,7 @@ def embedding(question, text):
                 context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
             utils.clear_screen()
             print("Reranking... Skipped! The rate limit might be reached!")
-    context = "\n\n".join(context_parts)
-    context = "Reference materials and contexts:\n\n" + context + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
-    return context
+    return "Reference materials and contexts:\n\n" + "\n\n".join(context_parts) + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
 
 def gemini_embed(model, allchunks):
     response = [

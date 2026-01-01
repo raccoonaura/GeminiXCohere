@@ -9,7 +9,7 @@
 - 同時呼叫 Gemini 及 Command 的回覆並整合
 - 生成完整回答前先串流匯出即時簡答
 - 多回合對話 (記憶系統)
-- 快取系統 (Cache)
+- 快取系統 (Cache system)
 - 思考模式 (Thinking / Reasoning)
 - 思考內容顯示 (CoT / Chain-of-Thought)
 - 圖片理解 (Image Understanding)
