@@ -60,7 +60,7 @@ def initialize_cohere():
         except Exception as e: co = None  # KeyboardInterrupt check
 
 def ask_gemini(question):
-    global gemini_messages, gemini_response, gemini_cot, gemini_thought, gemini_end_thinking, gemini_start_generating, gemini_end_generating, gemini_model
+    global gemini_cot, gemini_thought, gemini_model
     gemini_cot = ""
     gemini_thought = False
     # for some reason, Gemini 2.0 is called 2.0, Gemini 3 is called 3???????
@@ -125,11 +125,9 @@ def ask_gemini(question):
                                                         gemini_model = "Gemini 2.0 Flash Lite"
                                                         generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
                                                     except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
-    gemini_end_generating = f"{time.perf_counter() - gemini_start_generating:.3f}"
-    print ("\n\n-------------------------\n")
 
 def ask_command(question):
-    global command_messages, command_response, command_thought, command_end_thinking, command_start_generating, command_end_generating, command_model
+    global command_response, command_thought, command_model
     command_thought = False
     command_response = ""
     try:  # Command A
@@ -154,11 +152,9 @@ def ask_command(question):
                         command_model = "Command R"
                         generate_handler.command_generate("command-r-08-2024", "disabled")
                     except Exception as e: print(f'Cohere API Key invalid / An error occurred: {e}')
-    command_end_generating = f"{time.perf_counter() - command_start_generating:.3f}"
-    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def merge_responses(question):
-    global gemini_response, command_response, merged_messages, merged_response, gemini_merge_end_thinking, gemini_start_merging, gemini_end_merging, gemini_merge_model, error
+    global merged_messages, gemini_start_merging, gemini_merge_model
     gemini_start_merging = time.perf_counter()
     merged_messages = [{"role": "user", "parts": [{"text": question}]}]
     try:  # Gemini 3 Pro, it doesn't support NO reasoning
@@ -214,6 +210,3 @@ def merge_responses(question):
                                 gemini_merge_model = "Gemini 2.0 Flash Lite"
                                 generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
                             except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
-    gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
-    gemini_end_merging = f"{time.perf_counter() - gemini_start_merging:.3f}"
-    merged_response = response.text

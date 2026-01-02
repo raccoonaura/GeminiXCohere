@@ -85,6 +85,8 @@ def gemini_generate(model, boolean):
                 full_response.append(part.text)
     model_client.gemini_cot = '\n'.join(full_thought)
     model_client.gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
+    model_client.gemini_end_generating = f"{time.perf_counter() - model_client.gemini_start_generating:.3f}"
+    print ("\n\n-------------------------\n")
 
 def command_generate(model, value):
     if response_handler.context:
@@ -113,6 +115,8 @@ def command_generate(model, value):
                 if file_handler.skip_gemini:
                     print(event.delta.message.content.text, end = "")
                 model_client.command_response += chunk
+    model_client.command_end_generating = f"{time.perf_counter() - model_client.command_start_generating:.3f}"
+    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def gemini_merge(model, boolean):
     instruction = f"""
@@ -147,4 +151,6 @@ Response 2:
         contents = model_client.merged_messages,
         config = config,
     )
-    return response
+    model_client.gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
+    model_client.gemini_end_merging = f"{time.perf_counter() - model_client.gemini_start_merging:.3f}"
+    model_client.merged_response = response.text

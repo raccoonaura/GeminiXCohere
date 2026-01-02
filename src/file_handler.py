@@ -4,7 +4,6 @@ from src import utils
 from pathlib import Path
 import subprocess
 import mimetypes
-import sqlite3
 import shutil
 import base64
 import os
