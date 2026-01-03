@@ -90,19 +90,19 @@ def embedding(question, text):
         query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
     except:
         try:
-            model_client.embed_model = "Embed v4.0"
+            model_client.embed_model = "Embed 4"
             query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
             query_embedding = np.array(query_embedding)
             doc_embeddings = np.array(doc_embeddings)
         except:
             try:
-                model_client.embed_model = "Embed Multilingual v3.0"
+                model_client.embed_model = "Embed 3"
                 query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
                 query_embedding = np.array(query_embedding)
                 doc_embeddings = np.array(doc_embeddings)
             except:
                 try:
-                    model_client.embed_model = "Embed Multilingual Light v3.0"
+                    model_client.embed_model = "Embed Light 3"
                     query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
                     query_embedding = np.array(query_embedding)
                     doc_embeddings = np.array(doc_embeddings)
@@ -126,24 +126,36 @@ def embedding(question, text):
     utils.set_marker()
     print("Reranking...")
     try:
-        model_client.rerank_model = "Rerank v3.5"
-        context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
+        model_client.rerank_model = "Rerank 4 Pro"
+        context_parts = embedding_handler.rerank_rerank("rerank-v4.0-pro", top_k_results, question)
         utils.clear_screen()
         print("Reranking... Done!")
     except:
         try:
-            model_client.rerank_model = "Rerank Multilingual v3.0"
-            context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
+            model_client.rerank_model = "Rerank 4 Fast"
+            context_parts = embedding_handler.rerank_rerank("rerank-v4.0-fast", top_k_results, question)
             utils.clear_screen()
             print("Reranking... Done!")
         except:
-            model_client.rerank_model = ""
-            top_k_indices = np.argsort(similarities)[::-1][:3]
-            context_parts = []
-            for rank, idx in enumerate(top_k_indices, 1):
-                context_parts.append(f"[參考資料 {rank}] (相似度: {similarities[idx]:.2f})\n{allchunks[idx]}")
-            utils.clear_screen()
-            print("Reranking... Skipped! The rate limit might be reached!")
+            try:
+                model_client.rerank_model = "Rerank 3.5"
+                context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
+                utils.clear_screen()
+                print("Reranking... Done!")
+            except:
+                try:
+                    model_client.rerank_model = "Rerank 3"
+                    context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
+                    utils.clear_screen()
+                    print("Reranking... Done!")
+                except:
+                    model_client.rerank_model = ""
+                    top_k_indices = np.argsort(similarities)[::-1][:3]
+                    context_parts = []
+                    for rank, idx in enumerate(top_k_indices, 1):
+                        context_parts.append(f"[Reference material {rank}] (Similarity: {similarities[idx]:.2f})\n{allchunks[idx]}")
+                    utils.clear_screen()
+                    print("Reranking... Skipped! The rate limit might be reached!")
     return "Reference materials and contexts:\n\n" + "\n\n".join(context_parts) + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
 
 def gemini_embed(model, allchunks):

@@ -12,7 +12,7 @@ def gemini_generate(model, boolean):
     full_response = []
     full_thought = []
     if model == "gemini-3.0-pro" or model == "gemini-3.0-flash":
-        if response_handler.spreadsheet:
+        if response_handler.context:
             config = types.GenerateContentConfig(
                 thinking_config = types.ThinkingConfig(
                     thinking_level = "high" if boolean else "medium",
@@ -36,7 +36,7 @@ def gemini_generate(model, boolean):
                 )
             )
     else:
-        if response_handler.spreadsheet:
+        if response_handler.context:
             config = types.GenerateContentConfig(
                 thinking_config = types.ThinkingConfig(
                     thinking_budget = -1 if boolean else 0,
@@ -92,7 +92,7 @@ def command_generate(model, value):
     if response_handler.context:
         res = model_client.co.chat_stream(
             model = model,
-            messages = model_client.command_messages,# + [{"role": "system", "content": response_handler.context}],
+            messages = model_client.command_messages + [{"role": "system", "content": response_handler.context}],
             thinking = {"type": value},
         )
     else:

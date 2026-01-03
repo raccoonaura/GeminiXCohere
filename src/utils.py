@@ -4,6 +4,9 @@ import platform
 class Error(Exception):
     pass
 
+def sys_exit_for_debugging_purposes():
+    raise SystemExit(0)
+
 def clear_all():
     if platform.system() == "Windows":
         os.system("cls")

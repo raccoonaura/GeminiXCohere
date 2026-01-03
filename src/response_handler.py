@@ -19,6 +19,7 @@ def handle_conversation(question):
         image = []
         document = []
         spreadsheet = []
+        context = ""
         file_handler.skip_gemini = False
         file_handler.skip_command = False
         utils.clear_all()
@@ -46,7 +47,6 @@ def handle_conversation(question):
                     else: context = pre_context
                     if question[1] == "@": print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
                     else: print ("\n-------------------------\n")
-            else: context = ""
             memory_handler.memorize_question(question)
             t1 = threading.Thread(target=model_client.ask_gemini, args=(question,))
             t2 = threading.Thread(target=model_client.ask_command, args=(question,))

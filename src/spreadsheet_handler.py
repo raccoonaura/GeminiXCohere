@@ -36,9 +36,9 @@ def handle_spreadsheets(files):
         elif ext.lower() in [".ots", ".fods"]:  # ods範本和扁平化版
             df = pd.read_excel(file_handler.file_to_libreoffice(path, "ods"), sheet_name=None, parse_dates=True)
         elif ext.lower() in [".csv"]:
-            df = pd.read_csv(path, sep=",", on_bad_lines="warn", parse_dates=True)
+            df = pd.read_csv(path, on_bad_lines="warn", parse_dates=True)
         elif ext.lower() in [".tsv"]:  # 跟csv一模一樣 只不過是換行從用逗號變成用Tab而已
-            df = pd.read_csv(path, sep="\t", on_bad_lines="warn", parse_dates=True)
+            df = pd.read_csv(path, sep="	", on_bad_lines="warn", parse_dates=True)
         elif ext.lower() in [".xml"]:
             root = ET.parse(path).getroot()  # 拆解xml
             tags = set()  # 合集 跟list一樣 只是沒有排序 也不會有重複的物品
