@@ -6,9 +6,8 @@ from src import file_handler
 from src import utils
 import time
 
-client = None  # Gemini client
-co = None  # Cohere client
-# vs code kept asking me to add the previous two lines (WHY) even tho the whole thing works without them
+gemini_client = None
+cohere_client = None
 
 gemini_messages = []
 command_messages = []
@@ -36,28 +35,32 @@ embed_model = ""
 rerank_model = ""
 
 def initialize_gemini():
-    global client
-    while not client:
+    global gemini_client
+    while not gemini_client:
         utils.clear_all()
         try:
             key = input("Enter Gemini API Key: ").strip()
             if key == "":  # empty input check
                 continue
             else:
-                client = Client(api_key=key)
-        except: client = None  # KeyboardInterrupt check
+                print("Checking if the key is valid...")
+                gemini_client = Client(api_key=key)
+                gemini_client.models.list()
+        except: gemini_client = None  # KeyboardInterrupt check
 
 def initialize_cohere():
-    global co
-    while not co:
+    global cohere_client
+    while not cohere_client:
         utils.clear_all()
         try:
             key = input("Enter Cohere API Key: ").strip()
             if key == "":  # empty input check
                 continue
             else:
-                co = ClientV2(api_key=key)
-        except Exception as e: co = None  # KeyboardInterrupt check
+                print("Checking if the key is valid...")
+                cohere_client = ClientV2(api_key=key)
+                cohere_client.models.list()
+        except Exception as e: cohere_client = None  # KeyboardInterrupt check
 
 def ask_gemini(question):
     global gemini_cot, gemini_thought, gemini_model
@@ -160,43 +163,43 @@ def merge_responses(question):
     try:  # Gemini 3 Pro, it doesn't support NO reasoning
         if question[0] == "@":  # Reasoning
             gemini_merge_model = "Gemini 3 Pro"
-            response = generate_handler.gemini_merge("gemini-3-pro-preview", True)
+            generate_handler.gemini_merge("gemini-3-pro-preview", True)
         else:  # No reasoning
             gemini_merge_model = "Gemini 3 Flash"
-            response = generate_handler.gemini_merge("gemini-3-flash-preview", False)
+            generate_handler.gemini_merge("gemini-3-flash-preview", False)
         utils.clear_all()
     except:
         try:  # Gemini 3 Flash, fallback if Pro is not available
             gemini_merge_model = "Gemini 3 Flash"
             if question[0] == "@":  # Reasoning
-                response = generate_handler.gemini_merge("gemini-3-flash-preview", True)
+                generate_handler.gemini_merge("gemini-3-flash-preview", True)
             else:  # No reasoning
-                response = generate_handler.gemini_merge("gemini-3-flash-preview", False)
+                generate_handler.gemini_merge("gemini-3-flash-preview", False)
             utils.clear_all()
         except:
             try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
                 if question[0] == "@":  # Reasoning
                     gemini_merge_model = "Gemini 2.5 Pro"
-                    response = generate_handler.gemini_merge("gemini-2.5-pro", True)
+                    generate_handler.gemini_merge("gemini-2.5-pro", True)
                 else:  # No reasoning
                     gemini_merge_model = "Gemini 2.5 Flash"
-                    response = generate_handler.gemini_merge("gemini-2.5-flash", False)
+                    generate_handler.gemini_merge("gemini-2.5-flash", False)
                 utils.clear_all()
             except:
                 try:  # Gemini 2.5 Flash, fallback if Pro is not available
                     gemini_merge_model = "Gemini 2.5 Flash"
                     if question[0] == "@":  # Reasoning
-                        response = generate_handler.gemini_merge("gemini-2.5-flash", True)
+                        generate_handler.gemini_merge("gemini-2.5-flash", True)
                     else:  # No reasoning
-                        response = generate_handler.gemini_merge("gemini-2.5-flash", False)
+                        generate_handler.gemini_merge("gemini-2.5-flash", False)
                     utils.clear_all()
                 except:
                     try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available
                         gemini_merge_model = "Gemini 2.5 Flash Lite"
                         if question[0] == "@":  # Reasoning
-                            response = generate_handler.gemini_merge("gemini-2.5-flash-lite", True)
+                            generate_handler.gemini_merge("gemini-2.5-flash-lite", True)
                         else:  # No reasoning
-                            response = generate_handler.gemini_merge("gemini-2.5-flash-lite", False)
+                            generate_handler.gemini_merge("gemini-2.5-flash-lite", False)
                         utils.clear_all()
                     except:
                         try:  # Gemini 2.0 Flash, fallback if 2.5 is not available

@@ -160,7 +160,7 @@ def embedding(question, text):
 
 def gemini_embed(model, allchunks):
     response = [
-        np.array(e.values) for e in model_client.client.models.embed_content(
+        np.array(e.values) for e in model_client.gemini_client.models.embed_content(
             model=model,
             contents=allchunks,
             config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")).embeddings
@@ -171,17 +171,16 @@ def gemini_embed(model, allchunks):
     return query_embedding, doc_embeddings
 
 def embed_embed(model, allchunks):  # like, thats the name of cohere's embed model, what can i say
-    co = model_client.co
     query = allchunks[0:1]
     chunks = allchunks[1:]
 
-    query_res = co.embed(
+    query_res = model_client.cohere_client.embed(
         texts=query,
         model=model,
         input_type="search_query",
         embedding_types=["float"]
     )
-    chunks_res = co.embed(
+    chunks_res = model_client.cohere_client.embed(
         texts=chunks,
         model=model,
         input_type="search_document",
@@ -192,8 +191,7 @@ def embed_embed(model, allchunks):  # like, thats the name of cohere's embed mod
     return query_embedding, doc_embeddings
 
 def rerank_rerank(model, top_k_results, question):  # yes, thats the name of cohere's rerank model
-    co = model_client.co
-    results = co.rerank(
+    results = model_client.cohere_client.rerank(
         model=model,
         query=question,
         documents=top_k_results,

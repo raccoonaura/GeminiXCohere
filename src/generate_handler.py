@@ -61,7 +61,7 @@ def gemini_generate(model, boolean):
                 )
             )
 
-    for chunk in model_client.client.models.generate_content_stream(
+    for chunk in model_client.gemini_client.models.generate_content_stream(
         model = model,
         contents = model_client.gemini_messages,
         config = config
@@ -90,13 +90,13 @@ def gemini_generate(model, boolean):
 
 def command_generate(model, value):
     if response_handler.context:
-        res = model_client.co.chat_stream(
+        res = model_client.cohere_client.chat_stream(
             model = model,
             messages = model_client.command_messages + [{"role": "system", "content": response_handler.context}],
             thinking = {"type": value},
         )
     else:
-        res = model_client.co.chat_stream(
+        res = model_client.cohere_client.chat_stream(
             model = model,
             messages = model_client.command_messages,
             thinking = {"type": value},
@@ -146,7 +146,7 @@ Response 2:
                     thinking_config = types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
                     system_instruction = instruction
         )
-    response = model_client.client.models.generate_content(
+    response = model_client.gemini_client.models.generate_content(
         model = model,
         contents = model_client.merged_messages,
         config = config,
