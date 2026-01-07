@@ -36,10 +36,13 @@ def handle_conversation(question):
                 utils.set_marker()
                 if file_handler.get_file(): pass
                 else: return
-                if image: file_handler.handle_image(image)
+                if image:
+                    file_handler.handle_image(image)
+                    if question[1] == "@": print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
                 if spreadsheet:
                     context = spreadsheet_handler.handle_spreadsheets(spreadsheet)
                     if context == "error!": return
+                    if question[1] == "@": print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
                 if document:
                     pre_context = embedding_handler.embedding(question, document_handler.handle_document(document))
                     if pre_context == "error!": return

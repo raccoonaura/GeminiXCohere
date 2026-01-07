@@ -78,9 +78,13 @@ def embedding(question, text):
     letters = 300
     chunks = chunk_by_sentence(text, letters, 2)
     allchunks = [question] + chunks
-    while len(allchunks) > 100 and letters <= 700:
+    while len(allchunks) > 96 and letters <= 700:  # to prevent reaching embedding models' rate-limit
         letters += 100
         chunks = chunk_by_sentence(text, letters, 2)
+        allchunks = [question] + chunks
+    if letters > 700:  # RAG would not work well if the context is too long
+        print("An error occurred while embedding! The documents are too long!")
+        return "error!"
     utils.clear_screen()
     print("Chunking... Done!")
     utils.set_marker()
