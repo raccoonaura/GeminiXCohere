@@ -39,10 +39,24 @@ def memorize_question(question):
 
 def memorize_response():
     global current_history
-    gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
-    command_histories.append({"role": "assistant", "content": model_client.merged_response})
-    model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})
-    model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
+    if file_handler.skip_command and file_handler.skip_gemini:
+        return
+    elif file_handler.skip_command:
+        gemini_histories.append({"role": "model", "parts": [{"text": model_client.gemini_response}]})
+        command_histories.append({"role": "assistant", "content": model_client.gemini_response})
+        model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})
+        model_client.command_messages.append({"role": "assistant", "content": model_client.gemini_response})
+    elif file_handler.skip_gemini:
+        gemini_histories.append({"role": "model", "parts": [{"text": model_client.command_response}]})
+        command_histories.append({"role": "assistant", "content": model_client.command_response})
+        model_client.gemini_messages.append({"role": "model", "parts": [{"text": model_client.command_response}]})
+        model_client.command_messages.append({"role": "assistant", "content": model_client.command_response})
+    else:
+        gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
+        command_histories.append({"role": "assistant", "content": model_client.merged_response})
+        model_client.gemini_messages.append({"role": "model", "parts": [model_client.merged_part]})
+        model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
+
     if not current_history:
         data = {'gemini': gemini_histories, 'command': command_histories}
         dt = datetime.datetime.now()

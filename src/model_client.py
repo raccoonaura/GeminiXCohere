@@ -13,6 +13,7 @@ gemini_messages = []
 command_messages = []
 merged_messages = []
 gemini_parts = []
+merged_part = None
 gemini_response = ""
 command_response = ""
 merged_response = ""
@@ -60,7 +61,7 @@ def initialize_cohere():
                 print("Checking if the key is valid...")
                 cohere_client = ClientV2(api_key=key)
                 cohere_client.models.list()
-        except Exception as e: cohere_client = None  # KeyboardInterrupt check
+        except: cohere_client = None  # KeyboardInterrupt check
 
 def ask_gemini(question):
     global gemini_cot, gemini_thought, gemini_model

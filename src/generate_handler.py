@@ -153,4 +153,5 @@ Response 2:
     )
     model_client.gemini_merge_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
     model_client.gemini_end_merging = f"{time.perf_counter() - model_client.gemini_start_merging:.3f}"
+    model_client.merged_part = response
     model_client.merged_response = response.text
