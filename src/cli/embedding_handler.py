@@ -1,7 +1,7 @@
 from google.genai import types
-from src import embedding_handler
-from src import model_client
-from src import utils
+from src.cli import embedding_handler
+from src.cli import model_client
+from src.cli import utils
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re

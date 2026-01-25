@@ -27,6 +27,7 @@
 - [README.md](https://github.com/raccoonaura/GeminiXCohere/blob/main/README.md): 主入口說明
 - [LICENSE](https://github.com/raccoonaura/GeminiXCohere/blob/main/LICENSE): 授權
 - [requirements.txt](https://github.com/raccoonaura/GeminiXCohere/blob/main/requirements.txt): 環境需求
-- [main.py](https://github.com/raccoonaura/GeminiXCohere/blob/main/main.py): 主程式
+- [cli.py](https://github.com/raccoonaura/GeminiXCohere/blob/main/cli.py): CLI入口
+- [app.py](https://github.com/raccoonaura/GeminiXCohere/blob/main/app.py): App入口
 - [src/](https://github.com/raccoonaura/GeminiXCohere/tree/main/src): 程式碼
 - [docs/](https://github.com/raccoonaura/GeminiXCohere/tree/main/docs): 文檔

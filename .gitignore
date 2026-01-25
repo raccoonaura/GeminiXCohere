@@ -2,6 +2,7 @@ caches/
 logs/
 histories/
 embeds/temp
+.gradio/
 .venv/
 env/
 venv/

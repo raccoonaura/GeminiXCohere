@@ -1,5 +1,5 @@
-from src import file_handler
-from src import utils
+from src.cli import file_handler
+from src.cli import utils
 from ebooklib import epub
 from pathlib import Path
 import pdfplumber

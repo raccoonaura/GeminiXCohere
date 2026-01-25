@@ -1,6 +1,6 @@
-from src import file_handler
-from src import model_client
-from src import utils
+from src.cli import file_handler
+from src.cli import model_client
+from src.cli import utils
 from rapidfuzz import fuzz
 import os
 import shutil

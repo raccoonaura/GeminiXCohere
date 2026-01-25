@@ -1,9 +1,9 @@
 from google.genai import types
-from src import spreadsheet_handler
-from src import response_handler
-from src import file_handler
-from src import model_client
-from src import utils
+from src.cli import spreadsheet_handler
+from src.cli import response_handler
+from src.cli import file_handler
+from src.cli import model_client
+from src.cli import utils
 import time
 
 def gemini_generate(model, boolean):

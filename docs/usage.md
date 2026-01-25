@@ -12,9 +12,12 @@ cd GeminiXCohere
 ```bash
 pip install -r requirements.txt
 ```
-4. 運行 CLI
+4. 運行 CLI / App
 ```bash
-python main.py
+python cli.py
+```
+```bash
+python app.py
 ```
 ## 2. API Key輸入
 分別輸入Gemini及Cohere的API Key (不會儲存於伺服器/程式中)

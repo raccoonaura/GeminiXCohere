@@ -1,10 +1,12 @@
-from src import spreadsheet_handler
-from src import embedding_handler
-from src import document_handler
-from src import memory_handler
-from src import file_handler
-from src import model_client
-from src import utils
+from src.cli import spreadsheet_handler
+
+
+from src.cli import embedding_handler
+from src.cli import document_handler
+from src.cli import memory_handler
+from src.cli import file_handler
+from src.cli import model_client
+from src.cli import utils
 import threading
 import time
 thought_start = None

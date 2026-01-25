@@ -1,9 +1,9 @@
 from google.genai import Client
 from cohere import ClientV2
-from src import response_handler
-from src import generate_handler
-from src import file_handler
-from src import utils
+from src.cli import response_handler
+from src.cli import generate_handler
+from src.cli import file_handler
+from src.cli import utils
 import time
 
 gemini_client = None

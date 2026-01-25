@@ -1,8 +1,8 @@
-from src import response_handler
-from src import memory_handler
-from src import file_handler
-from src import model_client
-from src import utils
+from src.cli import response_handler
+from src.cli import memory_handler
+from src.cli import file_handler
+from src.cli import model_client
+from src.cli import utils
 
 question = ""
 
