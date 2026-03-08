@@ -11,18 +11,13 @@ def gemini_generate(model, boolean):
     model_client.gemini_parts = []
     full_response = []
     full_thought = []
-    if model == "gemini-3.0-pro" or model == "gemini-3.0-flash":
+    if model.startswith("gemini-3"):
         if response_handler.context:
             config = types.GenerateContentConfig(
                 thinking_config = types.ThinkingConfig(
                     thinking_level = "high" if boolean else "medium",
-                    # 3.0 Pro supports "high", "low"
-                    # 3.0 Flash supports "high", "medium", "low", "minimal"
-                    # if thinking is true then "high", otherwise "medium"
-                    # this works (supposed to) even when Pro doesnt support medium
-                    # bcz Pro will only be used when thinking is enabled
-                    # so if boolean is false, its gotta be Flash, always will be
-                    # in that case, "medium" will work
+                    # 3.1 Pro supports "high", "medium", "low"
+                    # 3 Flash and Flash Lite supports "high", "medium", "low", "minimal"
                     include_thoughts = boolean
                 ),
                 system_instruction = response_handler.context,
@@ -48,6 +43,7 @@ def gemini_generate(model, boolean):
                     # even tho i havent used 2.5 Pro in 2 weeks
                     # and theres no usuage displaying
                     # regarding 2.5 Pro in google ai studio
+                    # UPDATE UPDATE: we p2w nowadays
                     include_thoughts = boolean
                 ),
                 system_instruction = response_handler.context,
@@ -136,15 +132,15 @@ Response 2:
 
 {response_handler.context}
 """
-    if model == "gemini-3.0-pro" or model == "gemini-3.0-flash":
+    if model.startswith("gemini-3"):
         config = types.GenerateContentConfig(
-                    thinking_level = "high" if boolean else "medium",
-                    system_instruction = instruction
+            thinking_config = types.ThinkingConfig(thinking_level = "high" if boolean else "medium"),
+            system_instruction = instruction
         )
     else:
         config = types.GenerateContentConfig(
-                    thinking_config = types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
-                    system_instruction = instruction
+            thinking_config = types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
+            system_instruction = instruction
         )
     response = model_client.gemini_client.models.generate_content(
         model = model,
