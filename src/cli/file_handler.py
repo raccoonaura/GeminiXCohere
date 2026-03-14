@@ -110,21 +110,39 @@ def get_file():
 def file_to_libreoffice(path, type):
     path = Path(path)
     file_handler.reset_temp()
-    candidates = [  # 一系列LibreOffice通常會有的名字/檔案位置
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        "soffice",  # for linux (probably, i dont really use use linux)
-        "libreoffice",
-    ]
-    for c in candidates:  # 找到LibreOffice的位置
-        if Path(c).exists():
-            soffice = c
+    soffice = None
+    for c in [r"C:\Program Files\LibreOffice\program\soffice.exe",  # LibreOffice在Windows通常會有的檔案位置
+              r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"]:
+        if Path(c).exists():  # 找到LibreOffice的位置
+            soffice = [c]
             break
 
-    if soffice is None:  # 確認LibreOffice是否存在
-        return RuntimeError("LibreOffice not found! Please install it before continuing!")
+    if not soffice:  # for linux, checks if libreoffice is in the system PATH
+        for c in ["soffice",  # LibreOffice在Linux通常會有的system PATH
+                "libreoffice"]:
+            if shutil.which(c):  # (NOT TESTED) 找到LibreOffice的位置
+                soffice = [shutil.which(c)]
+                break
+
+    if not soffice:  # for linux, checks if libreoffice is installed through flatpak instead
+        if shutil.which("flatpak"):  # (NOT TESTED)
+            result = subprocess.run(
+                ["flatpak", "info", "org.libreoffice.LibreOffice"], 
+                capture_output=True, text=True
+            )
+            if result.returncode == 0: soffice = ["flatpak", "run", "org.libreoffice.LibreOffice"]
+        if shutil.which("flatpak-spawn"):  # checks if the ide is installed with flatpak as well
+            result = subprocess.run(
+                ["flatpak-spawn", "--host", "flatpak", "info", "org.libreoffice.LibreOffice"], 
+                capture_output=True, text=True
+            )
+            if result.returncode == 0: soffice = ["flatpak-spawn", "--host", "flatpak", "run", "org.libreoffice.LibreOffice"]
+
+    if not soffice:  # 確認LibreOffice是否存在
+        raise RuntimeError("LibreOffice not found! Please install it before continuing!")
+
     cmd = [  # 指令
-        soffice,
+        *soffice,
         "--headless",
         "--convert-to", type,
         "--outdir", str(file_handler.TEMP_DIR),
@@ -132,7 +150,7 @@ def file_to_libreoffice(path, type):
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)  # 跑上面的指令
     if result.returncode != 0:  # 如果成功的話 系統應回傳0
-        return RuntimeError(
+        raise RuntimeError(
             f"Failed while converting files with LibreOffice! Please make sure you have it installed and is able to run {soffice} in cmd!\n"
             f"cmd: {' '.join(cmd)}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )

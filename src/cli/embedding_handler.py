@@ -90,30 +90,34 @@ def embedding(question, text):
     utils.set_marker()
     print("Embedding...")
     try:
-        model_client.embed_model = "Gemini Embedding 001"
-        query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
+        model_client.embed_model = "Embed 4"
+        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
+        query_embedding = np.array(query_embedding)
+        doc_embeddings = np.array(doc_embeddings)
     except:
         try:
-            model_client.embed_model = "Embed 4"
-            query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
-            query_embedding = np.array(query_embedding)
-            doc_embeddings = np.array(doc_embeddings)
+            model_client.embed_model = "Gemini Embedding 2"
+            query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-2-preview", allchunks)
         except:
             try:
-                model_client.embed_model = "Embed 3"
-                query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
-                query_embedding = np.array(query_embedding)
-                doc_embeddings = np.array(doc_embeddings)
+                model_client.embed_model = "Gemini Embedding"
+                query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
             except:
                 try:
-                    model_client.embed_model = "Embed Light 3"
-                    query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
+                    model_client.embed_model = "Embed 3"
+                    query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
                     query_embedding = np.array(query_embedding)
                     doc_embeddings = np.array(doc_embeddings)
-                except Exception as e:
-                    model_client.embed_model = ""
-                    print("An error occurred while embedding: ", e)
-                    return "error!"
+                except:
+                    try:
+                        model_client.embed_model = "Embed Light 3"
+                        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
+                        query_embedding = np.array(query_embedding)
+                        doc_embeddings = np.array(doc_embeddings)
+                    except Exception as e:
+                        model_client.embed_model = ""
+                        print("An error occurred while embedding: ", e)
+                        return "error!"
     if query_embedding.size == 0 or doc_embeddings.size == 0:
         print("An error occurred while embedding! The rate limit might be reached!")
         return "error!"
