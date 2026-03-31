@@ -13,7 +13,7 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # state["spreadsheet"] = []
         # state["context"] = ""
         # file_handler.skip_gemini = False
-        # file_handler.skip_command = False
+        # file_handler.skip_mistral_n_command = False
         # utils.clear_all()
         # print (f"You: {question}\n\n-------------------------\n")
         # state["embed_model"] = ""
@@ -60,11 +60,11 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # if not file_handler.skip_gemini:
         #     ask_gemini.start()
         #     ask_gemini.join()
-        # if not file_handler.skip_command:
+        # if not file_handler.skip_mistral_n_command:
         #     ask_command.start()
         #     ask_command.join()
 
-        # if not file_handler.skip_gemini and file_handler.skip_command:
+        # if not file_handler.skip_gemini and file_handler.skip_mistral_n_command:
         # if state["embed_model"] and state["rerank_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens.\nEmbedded using {state["embed_model"]}, reranked using {state["rerank_model"]}, generated response using model {state["gemini_model"]}.\n\n-------------------------\n")
         # elif state["embed_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens.\nEmbedded using {state["embed_model"]}, generated response using model {state["gemini_model"]}.\n\n-------------------------\n")
         # else:
@@ -72,7 +72,7 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # gr.Info(f"Gemini thought for {gemini_state["gemini_end_thinking"]} seconds.\nTook {gemini_state["gemini_end_generating"]} seconds to generate the answer.\nGenerated {len(gemini_state["gemini_response"])} tokens.\nUsing model {gemini_state["gemini_model"]}.")
         # memory_handler.log_interaction(question, state["gemini_response"], "(Skipped.)", state["gemini_response"])
 
-        # if file_handler.skip_gemini and not file_handler.skip_command:
+        # if file_handler.skip_gemini and not file_handler.skip_mistral_n_command:
         # if state["embed_model"] and state["rerank_model"]: print(f"Command thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens.\nEmbedded using {state["embed_model"]}, reranked using {state["rerank_model"]}, generated response using model {state["command_model"]}.\n\n-------------------------\n")
         # elif state["embed_model"]: print(f"Command thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens.\nEmbedded using {state["embed_model"]}, generated response using model {state["command_model"]}.\n\n-------------------------\n")
         # else:
@@ -80,9 +80,9 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # gr.Info(f"Command thought for {cohere_state["command_end_thinking"]} seconds.\nTook {cohere_state["command_end_generating"]} seconds to generate the answer.\nGenerated {len(cohere_state["command_response"])} tokens.\nUsing model {cohere_state["command_model"]}.")
         # memory_handler.log_interaction(question, "(Skipped.)", state["command_response"], state["command_response"])
 
-        # if file_handler.skip_gemini and file_handler.skip_command: print("The image types you provided are partially unsupported by each model!\n\n-------------------------\n")
+        # if file_handler.skip_gemini and file_handler.skip_mistral_n_command: print("The image types you provided are partially unsupported by each model!\n\n-------------------------\n")
 
-        # if not file_handler.skip_gemini and not file_handler.skip_command:  # handling regularly
+        # if not file_handler.skip_gemini and not file_handler.skip_mistral_n_command:  # handling regularly
         # if state["embed_model"] and state["rerank_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens, using model {state["gemini_model"]}.\nCommand thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens, using model {state["command_model"]}.\nEmbedded using {state["embed_model"]}, reranked using {state["rerank_model"]}.\n\n-------------------------\n\nGenerating full response...")
         # elif state["embed_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens, using model {state["gemini_model"]}.\nCommand thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens, using model {state["command_model"]}.\nEmbedded using {state["embed_model"]}.\n\n-------------------------\n\nGenerating full response...")
         # else:

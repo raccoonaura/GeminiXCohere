@@ -5,12 +5,12 @@ from src.cli import file_handler
 from src.cli import model_client
 from src.cli import utils
 import time
+import ast
+import re
 
-def gemini_generate(model, boolean):
+def gemini_generate(model, boolean=False):
     utils.set_marker()
     model_client.gemini_parts = []
-    full_response = []
-    full_thought = []
     if model.startswith("gemini-3"):
         if response_handler.context:
             config = types.GenerateContentConfig(
@@ -67,10 +67,8 @@ def gemini_generate(model, boolean):
             if not part.text:
                 continue
             elif part.thought:
-                if boolean:
-                    utils.clear_screen()
-                    print(part.text)
-                    full_thought.append(part.text)
+                print(part.text)
+                model_client.gemini_cot += part.text
             else:
                 if model_client.gemini_thought is False:
                     if boolean: utils.clear_screen()
@@ -78,13 +76,66 @@ def gemini_generate(model, boolean):
                     model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                     model_client.gemini_start_generating = time.perf_counter()
                 print(part.text, end="")  # Real-time printing since the merged response can take a while
-                full_response.append(part.text)
-    model_client.gemini_cot = '\n'.join(full_thought)
-    model_client.gemini_response = ''.join(full_response)  # Join all chunks into a single string for logging and further processing
+                model_client.gemini_response += part.text
     model_client.gemini_end_generating = f"{time.perf_counter() - model_client.gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
 
-def command_generate(model, value):
+def mistral_generate(model, boolean=False):
+    if boolean:
+        if response_handler.context:  # TODO: add context thingies
+            res = model_client.mistral_client.chat.stream(
+                model = model,
+                messages = model_client.mistral_messages,
+                reasoning_effort="high"
+            )
+        else:
+            res = model_client.mistral_client.chat.stream(
+                model = model,
+                messages = model_client.mistral_messages,
+                reasoning_effort="high"
+            )
+    else:
+        if response_handler.context:  # TODO: add context thingies
+            res = model_client.mistral_client.chat.stream(
+                model = model,
+                messages = model_client.mistral_messages
+            )
+        else:
+            res = model_client.mistral_client.chat.stream(
+                model = model,
+                messages = model_client.mistral_messages
+            )
+
+    for chunk in res:
+        match = None
+        if isinstance(chunk.data.choices[0].delta.content, str):  # cot returns str or list
+            if "thinking=[]" in chunk.data.choices[0].delta.content:  # sometimes returns empty for some reason
+                continue
+            if re.search(r"text='([^']*)'", chunk.data.choices[0].delta.content):  # it switches between ' and "
+                match = re.search(r"text='([^']*)'", chunk.data.choices[0].delta.content)
+            elif re.search(r'text="([^"]*)"', chunk.data.choices[0].delta.content):
+                match = re.search(r'text="([^"]*)"', chunk.data.choices[0].delta.content)
+        elif isinstance(chunk.data.choices[0].delta.content, list):
+            if "thinking=[]" in str(chunk.data.choices[0].delta.content[0]):
+                continue
+            if re.search(r"text='([^']*)'", str(chunk.data.choices[0].delta.content[0])):
+                match = re.search(r"text='([^']*)'", str(chunk.data.choices[0].delta.content[0]))
+            elif re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0])):
+                match = re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0]))
+        if match:
+            # print(ast.literal_eval(f"'''{match.group(1)}'''"), end="")
+            model_client.mistral_cot += ast.literal_eval(f"'''{match.group(1)}'''")  # literal bulletproof (probably)
+        else:
+            if model_client.mistral_thought is False:
+                model_client.mistral_thought = True
+                model_client.mistral_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
+                model_client.mistral_start_generating = time.perf_counter()
+            # print(chunk.data.choices[0].delta.content, end="")
+            model_client.mistral_response += chunk.data.choices[0].delta.content
+    model_client.mistral_end_generating = f"{time.perf_counter() - model_client.mistral_start_generating:.3f}"
+    # print ("\n\n-------------------------\n")  TODO: command is doing the job here
+
+def command_generate(model, value="disabled"):
     if response_handler.context:
         res = model_client.cohere_client.chat_stream(
             model = model,
@@ -99,28 +150,26 @@ def command_generate(model, value):
         )
     for event in res:
         if event.type == "content-delta":
-            if event.delta.message.content.thinking and model_client.gemini_thought is False:
+            if event.delta.message.content.thinking:
                 # print(event.delta.message.content.thinking, end = "")
-                pass
+                model_client.command_cot += event.delta.message.content.thinking
             elif event.delta.message.content.text:
                 if model_client.command_thought is False:
                     model_client.command_thought = True
                     model_client.command_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                     model_client.command_start_generating = time.perf_counter()
-                chunk = event.delta.message.content.text
-                if file_handler.skip_gemini:
-                    print(event.delta.message.content.text, end = "")
-                model_client.command_response += chunk
+                # print(event.delta.message.content.text, end = "")
+                model_client.command_response += event.delta.message.content.text
     model_client.command_end_generating = f"{time.perf_counter() - model_client.command_start_generating:.3f}"
     if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def gemini_merge(model, boolean):
     instruction = f"""
-You're a helpful assistant for merging two LLM's responses
+You're a helpful assistant for merging two model's responses
 Merge both responses into one comprehensive answer
-1. Use the longer response as foundation
-2. Integrate unique points from the shorter one
-3. Add relevant insights both responses missed
+1. Use response 1 as the foundation
+2. Integrate unique points from the other responses
+3. Add relevant insights these three responses missed
 4. Do not include any preamble, headers, or concluding remarks
 5. Start the response immediately with the integrated content
 
@@ -128,6 +177,9 @@ Response 1:
 {model_client.gemini_response}
 
 Response 2:
+{model_client.mistral_response}
+
+Response 3:
 {model_client.command_response}
 
 {response_handler.context}

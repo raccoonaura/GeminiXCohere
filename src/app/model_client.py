@@ -89,8 +89,8 @@ def ask_command(reasoning, state):
     try:  # Command A
         state["command_model"] = "Command A Reasoning" if reasoning else "Command A"
         yield from generate_handler.command_generate("command-a-reasoning-08-2025" if reasoning else "command-a-03-2025", "enabled" if reasoning else "disabled", state)
-        # state["command_model"] = "Command A Reasoning" if reasoning else ("Command A Vision" if file_handler.command_image else "Command A")
-        # yield from generate_handler.command_generate("command-a-reasoning-08-2025" if reasoning else ("command-a-vision-07-2025" if file_handler.command_image else "command-a-03-2025"), "enabled" if reasoning else "disabled")
+        # state["command_model"] = "Command A Reasoning" if reasoning else ("Command A Vision" if file_handler.mistral_n_command_image else "Command A")
+        # yield from generate_handler.command_generate("command-a-reasoning-08-2025" if reasoning else ("command-a-vision-07-2025" if file_handler.mistral_n_command_image else "command-a-03-2025"), "enabled" if reasoning else "disabled")
     except Exception as e:
         if state["command_start"]: return (gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), state, gr.update())
         try:  # Command R+, fallback if A is not available, doesn't support reasoning and image reading

@@ -1,11 +1,12 @@
 # 設計理念與技術決策
-## 選用 Gemini 及 Command 的原因
-- Gemini: 整體較聰明，答案較完整，為整體核心
-- Command: 成本低，速度快，可作為second opinion來源
-- 兩者皆支援文件讀取，圖片輸入，思考模式，系統指示，etc.
-- 兩者都沒有限制使用次數，僅限制rate-limit
+## 選用模型的原因
+- Gemini: 整體聰明，圖片理解強，函式呼叫方便，為整體核心
+- Mistral: 成本低，速度快，可作為second opinion來源
+- Command: 搭配自家強大的RAG相關模型 以做context讀取
+- 模型皆支援文件讀取，圖片輸入，思考模式，系統指示，etc.
+- 模型都沒有限制使用次數，僅限制rate-limit
 ## 融合策略
-- 串流生成: Gemini相較於Command，答案通常較完整，因此讓Gemini先生成簡答
+- 串流生成: Gemini相較於其他模型，答案通常較完整也較聰明，因此讓Gemini先生成簡答
 - 自動整合: 由Gemini做回覆的合併，產生最終版本
 ## API Key 安全策略
 - 不保留、不上傳key

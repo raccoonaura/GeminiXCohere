@@ -11,9 +11,9 @@ def memorize_question(question, gemini_state, cohere_state):
     #     model_client.gemini_messages.append({"role": "user","parts": [{"text": question}] + data})
     # else:
     gemini_state["gemini_messages"].append({"role": "user", "parts": [{"text": question}]})
-    # if file_handler.command_image:
+    # if file_handler.mistral_n_command_image:
     #     data = []
-    #     for image in file_handler.command_image:
+    #     for image in file_handler.mistral_n_command_image:
     #         data.append({"type": "image_url","image_url": {"url": image,"detail": "high"}})
     #     model_client.command_messages.append({"role": "user", "content": [{"type": "text","text": question}] + data})
     # else:
@@ -22,9 +22,9 @@ def memorize_question(question, gemini_state, cohere_state):
 
 # def memorize_response():
 #     global current_history
-#     if file_handler.skip_command and file_handler.skip_gemini:
+#     if file_handler.skip_mistral_n_command and file_handler.skip_gemini:
 #         return
-#     elif file_handler.skip_command:
+#     elif file_handler.skip_mistral_n_command:
 #         gemini_histories.append({"role": "model", "parts": [{"text": model_client.gemini_response}]})
 #         command_histories.append({"role": "assistant", "content": model_client.gemini_response})
 #         model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})

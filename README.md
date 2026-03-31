@@ -1,12 +1,12 @@
-# Gemini X Cohere
+# PolyGlue
 
 ## 專案簡述
-- 本專案能同時呼叫 Gemini 與 Cohere 旗下模型，並整合回覆
+- 本專案能同時呼叫 Gemini、Mistral 與 Cohere 旗下模型，並整合回覆
 - 支援多回合對話、思考模式、文檔 RAG、圖片讀取
 
 ## 功能特色
 - 使用者自備 API key
-- 同時呼叫 Gemini 及 Command 的回覆並整合
+- 同時呼叫多個模型的回覆並整合
 - 生成完整回答前先串流匯出即時簡答
 - 多回合對話 (記憶系統)
 - 快取系統 (Cache system)
@@ -20,7 +20,7 @@
 ## 環境需求
 - [Python](https://www.python.org/downloads/) 3.13.x
 - 必要套件請參考 [`requirements.txt`](https://github.com/raccoonaura/GeminiXCohere/blob/main/requirements.txt)
-- [Gemini](https://aistudio.google.com/api-keys) 及 [Cohere](https://dashboard.cohere.com/api-keys) 的 API Key
+- [Gemini](https://aistudio.google.com/api-keys)、[Mistral](https://console.mistral.ai/home?profile_dialog=api-keys) 及 [Cohere](https://dashboard.cohere.com/api-keys) 的 API Key
 - 若使用 RAG / TAG 時需要更多檔案類型的支援，請安裝 [LibreOffice](https://www.libreoffice.org/download/download-libreoffice/)，**請安裝於其預設安裝位置**
 
 ## 專案架構

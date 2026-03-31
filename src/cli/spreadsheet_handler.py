@@ -19,7 +19,7 @@ common_xpaths = ["//*[contains(translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWX
                          # and if nothing was matched it gon use anything available
 
 def handle_spreadsheets(files):
-    file_handler.skip_command = True
+    file_handler.skip_mistral_n_command = True
     # first, theres no point to search the exact same file twice
     # say, if youre asking the models opinions on the documents, it makes sense to have both model running for rag
     # but i couldnt think of an instance of anyone wanting to ask for different answers based on a damn spreadsheet

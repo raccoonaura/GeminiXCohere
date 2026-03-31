@@ -15,12 +15,14 @@ threshold = 90
 match = None
 current_history = ""
 gemini_histories = []
+mistral_histories = []
 command_histories = []
 
 def memorize_question(question):
     if question[0] == "$": question = question[1:]
     if question[0] == "@": question = question[1:]
     gemini_histories.append({"role": "user", "parts": [{"text": question}]})
+    mistral_histories.append({"role": "user", "content": question})
     command_histories.append({"role": "user", "content": question})
     if file_handler.gemini_image:
         data = []
@@ -29,43 +31,56 @@ def memorize_question(question):
         model_client.gemini_messages.append({"role": "user","parts": [{"text": question}] + data})
     else:
         model_client.gemini_messages.append({"role": "user", "parts": [{"text": question}]})
-    if file_handler.command_image:
+    if file_handler.mistral_n_command_image:
         data = []
-        for image in file_handler.command_image:
+        for image in file_handler.mistral_n_command_image:
+            data.append({"type": "image_url","image_url": image})
+        model_client.mistral_messages.append({"role": "user", "content": [{"type": "text","text": question}] + data})
+        data = []
+        for image in file_handler.mistral_n_command_image:
             data.append({"type": "image_url","image_url": {"url": image,"detail": "high"}})
         model_client.command_messages.append({"role": "user", "content": [{"type": "text","text": question}] + data})
     else:
+        model_client.mistral_messages.append({"role": "user", "content": question})
         model_client.command_messages.append({"role": "user", "content": question})
 
 def memorize_response():
     global current_history
-    if file_handler.skip_command and file_handler.skip_gemini:
+    if file_handler.skip_mistral_n_command and file_handler.skip_gemini:
         return
-    elif file_handler.skip_command:
+    elif file_handler.skip_mistral_n_command:
         gemini_histories.append({"role": "model", "parts": [{"text": model_client.gemini_response}]})
+        mistral_histories.append({"role": "assistant", "content": model_client.gemini_response})
         command_histories.append({"role": "assistant", "content": model_client.gemini_response})
         model_client.gemini_messages.append({"role": "model", "parts": model_client.gemini_parts})
+        model_client.mistral_messages.append({"role": "assistant", "content": model_client.gemini_response})
         model_client.command_messages.append({"role": "assistant", "content": model_client.gemini_response})
     elif file_handler.skip_gemini:
         gemini_histories.append({"role": "model", "parts": [{"text": model_client.command_response}]})
+        mistral_histories.append({"role": "assistant", "content": model_client.command_response})
         command_histories.append({"role": "assistant", "content": model_client.command_response})
         model_client.gemini_messages.append({"role": "model", "parts": [{"text": model_client.command_response}]})
+        model_client.mistral_messages.append({"role": "assistant", "content": model_client.command_response})
         model_client.command_messages.append({"role": "assistant", "content": model_client.command_response})
     else:
         gemini_histories.append({"role": "model", "parts": [{"text": model_client.merged_response}]})
+        mistral_histories.append({"role": "assistant", "content": model_client.merged_response})
         command_histories.append({"role": "assistant", "content": model_client.merged_response})
         model_client.gemini_messages.append({"role": "model", "parts": [model_client.merged_part]})
+        model_client.mistral_messages.append({"role": "assistant", "content": model_client.merged_response})
         model_client.command_messages.append({"role": "assistant", "content": model_client.merged_response})
 
     if not current_history:
-        data = {'gemini': gemini_histories, 'command': command_histories}
+        data = {'gemini': gemini_histories, 'mistral': mistral_histories, 'command': command_histories}
         dt = datetime.datetime.now()
         now = dt.strftime('%Y-%m-%d-%H-%M-%S')
         current_history = f'{now}.json'
-        with open("histories/" + current_history, 'w', encoding="utf8") as f: json.dump(data, f, ensure_ascii=False)
+        with open("histories/" + current_history, 'w', encoding="utf8") as f:
+            json.dump(data, f, ensure_ascii=False)
     else:
-        data = {'gemini': gemini_histories, 'command': model_client.command_messages}
-        with open("histories/" + current_history, 'w', encoding="utf8") as f: json.dump(data, f, ensure_ascii=False)
+        data = {'gemini': gemini_histories, 'mistral': mistral_histories, 'command': model_client.command_messages}
+        with open("histories/" + current_history, 'w', encoding="utf8") as f:
+            json.dump(data, f, ensure_ascii=False)
 
 def reset_logs():
     if os.path.exists(LOGS_DIR):
@@ -73,21 +88,38 @@ def reset_logs():
     os.makedirs(LOGS_DIR)
     with open("logs/gemini_log.md", "w", encoding="utf-8") as file:
         pass
+    with open("logs/mistral_log.md", "w", encoding="utf-8") as file:
+        pass
     with open("logs/command_log.md", "w", encoding="utf-8") as file:
         pass
     with open("logs/merged_log.md", "w", encoding="utf-8") as file:
         pass
 
-def log_interaction(question, gemini_response, command_response, merged_response):
+def log_interaction(question, gemini_response, mistral_response, command_response, merged_response):
     if question[0] == "$":  # Reasoning
         question = question[1:]
     if question[0] == "@":  # Reasoning
         question = question[1:]
     if model_client.gemini_cot:
-        with open("logs/gemini_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model CoT:" + model_client.gemini_cot + "\n\n====================================================================================================\n\n")
-    with open("logs/gemini_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
-    with open("logs/command_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
-    with open("logs/merged_log.md", "a", encoding="utf-8") as file: file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
+        with open("logs/gemini_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.gemini_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
+    else:
+        with open("logs/gemini_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
+    if model_client.mistral_cot:
+        with open("logs/mistral_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.mistral_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
+    else:
+        with open("logs/mistral_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
+    if model_client.command_cot:
+        with open("logs/command_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.command_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
+    else:
+        with open("logs/command_log.md", "a", encoding="utf-8") as file:
+            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
+    with open("logs/merged_log.md", "a", encoding="utf-8") as file:
+        file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
 
 def reset_caches():
     if os.path.exists(CACHES_DIR):

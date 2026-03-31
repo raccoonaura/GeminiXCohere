@@ -11,6 +11,7 @@ if __name__ == "__main__":
     memory_handler.reset_caches()
     file_handler.reset_temp()
 model_client.initialize_gemini()
+model_client.initialize_mistral()
 model_client.initialize_cohere()
 utils.clear_all()
 

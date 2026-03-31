@@ -1,35 +1,47 @@
 from google.genai import Client
+from mistralai.client import Mistral
 from cohere import ClientV2
 from src.cli import response_handler
 from src.cli import generate_handler
 from src.cli import file_handler
 from src.cli import utils
 import time
+import os
 
 gemini_client = None
+mistral_client = None
 cohere_client = None
 
 gemini_messages = []
+mistral_messages = []
 command_messages = []
 merged_messages = []
 gemini_parts = []
 merged_part = None
 gemini_response = ""
+mistral_response = ""
 command_response = ""
 merged_response = ""
 gemini_cot = ""
+mistral_cot = ""
+command_cot = ""
 gemini_thought = False
+mistral_thought = False
 command_thought = False
 gemini_end_thinking = None
+mistral_end_thinking = None
 command_end_thinking = None
 gemini_merge_end_thinking = None
 gemini_start_generating = None
+mistral_start_generating = None
 command_start_generating = None
 gemini_start_merging = None
 gemini_end_generating = None
+mistral_end_generating = None
 command_end_generating = None
 gemini_end_merging = None
 gemini_model = ""
+mistral_model = ""
 command_model = ""
 gemini_merge_model = ""
 embed_model = ""
@@ -40,28 +52,45 @@ def initialize_gemini():
     while not gemini_client:
         utils.clear_all()
         try:
-            key = input("Enter Gemini API Key: ").strip()
+            if os.environ["Gemini_API_Key"]: key = os.environ["Gemini_API_Key"]
+            else: key = input("Enter Gemini API key: ").strip()
             if key == "":  # empty input check
                 continue
             else:
-                print("Checking if the key is valid...")
+                print("Checking if the key is valid... (1/3)")
                 gemini_client = Client(api_key=key)
                 gemini_client.models.list()
-        except: gemini_client = None  # KeyboardInterrupt check
+        except: gemini_client = None
+
+def initialize_mistral():
+    global mistral_client
+    while not mistral_client:
+        utils.clear_all()
+        try:
+            if os.environ["Mistral_API_Key"]: key = os.environ["Mistral_API_Key"]
+            else: key = input("Enter Mistral API key: ").strip()
+            if key == "":  # empty input check
+                continue
+            else:
+                print("Checking if the key is valid... (2/3)")
+                mistral_client = Mistral(api_key=key)
+                mistral_client.models.list()
+        except: mistral_client = None
 
 def initialize_cohere():
     global cohere_client
     while not cohere_client:
         utils.clear_all()
         try:
-            key = input("Enter Cohere API Key: ").strip()
+            if os.environ["Cohere_API_Key"]: key = os.environ["Cohere_API_Key"]
+            else: key = input("Enter Cohere API key: ").strip()
             if key == "":  # empty input check
                 continue
             else:
-                print("Checking if the key is valid...")
+                print("Checking if the key is valid... (3/3)")
                 cohere_client = ClientV2(api_key=key)
                 cohere_client.models.list()
-        except: cohere_client = None  # KeyboardInterrupt check
+        except: cohere_client = None
 
 def ask_gemini(question):
     global gemini_cot, gemini_thought, gemini_model
@@ -88,8 +117,9 @@ def ask_gemini(question):
                 if question[0] == "@":  # Reasoning
                     generate_handler.gemini_generate("gemini-3-flash-preview", True)
                 else:  # No reasoning
-                    generate_handler.gemini_generate("gemini-3-flash-preview", False)
-            except:
+                    generate_handler.gemini_generate("gemini-3-flash-preview")
+            except Exception as e:
+                print(e)
                 if not gemini_thought:
                     try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
                         if response_handler.spreadsheet: raise utils.Error("Skipping Gemini 3 for TAG")
@@ -97,8 +127,9 @@ def ask_gemini(question):
                         if question[0] == "@":  # Reasoning
                             generate_handler.gemini_generate("gemini-3.1-flash-lite-preview", True)
                         else:  # No reasoning
-                            generate_handler.gemini_generate("gemini-3.1-flash-lite-preview", False)
-                    except:
+                            generate_handler.gemini_generate("gemini-3.1-flash-lite-preview")
+                    except Exception as e:
+                        print(e)
                         if not gemini_thought:
                             try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
                                 if question[0] == "@":  # Reasoning
@@ -113,7 +144,7 @@ def ask_gemini(question):
                                         if question[0] == "@":  # Reasoning
                                             generate_handler.gemini_generate("gemini-2.5-flash", True)
                                         else:  # No reasoning
-                                            generate_handler.gemini_generate("gemini-2.5-flash", False)
+                                            generate_handler.gemini_generate("gemini-2.5-flash")
                                     except:
                                         if not gemini_thought:
                                             try:  # Gemini 2.5 Flash Lite, fallback if Flash is not available
@@ -121,7 +152,7 @@ def ask_gemini(question):
                                                 if question[0] == "@":  # Reasoning
                                                     generate_handler.gemini_generate("gemini-2.5-flash-lite", True)
                                                 else:  # No reasoning
-                                                    generate_handler.gemini_generate("gemini-2.5-flash-lite", False)
+                                                    generate_handler.gemini_generate("gemini-2.5-flash-lite")
                                             except:
                                                 if not gemini_thought:
                                                     try:  # Gemini 2.0 Flash, fallback if 2.5 is not available
@@ -129,16 +160,66 @@ def ask_gemini(question):
                                                         if question[0] == "@":  # Reasoning
                                                             generate_handler.gemini_generate("gemini-2.0-flash", True)
                                                         else:  # No reasoning
-                                                            generate_handler.gemini_generate("gemini-2.0-flash", False)
+                                                            generate_handler.gemini_generate("gemini-2.0-flash")
                                                     except:
                                                         if not gemini_thought:
                                                             try:  # Gemini 2.0 Flash Lite, fallback if Flash is not available, doesn't support reasoning
                                                                 gemini_model = "Gemini 2.0 Flash Lite"
-                                                                generate_handler.gemini_generate("gemini-2.0-flash-lite", False)
+                                                                generate_handler.gemini_generate("gemini-2.0-flash-lite")
                                                             except Exception as e: print(f'Gemini API Key invalid / An error occurred: {e}')
 
+def ask_mistral(question):
+    global mistral_cot, mistral_response, mistral_thought, mistral_model
+    mistral_cot = ""
+    mistral_thought = False
+    mistral_response = ""
+    try:
+        mistral_model = "Mistral Small 4"
+        if question[0] == "@":  # Reasoning
+            generate_handler.mistral_generate("mistral-small-2603", True)
+        else:  # No reasoning
+            generate_handler.mistral_generate("mistral-small-2603")
+    except:
+        if not mistral_thought:
+            try:
+                if question[0] == "@":  # Reasoning
+                    mistral_model = "Magistral Medium 1.2"
+                    generate_handler.mistral_generate("magistral-medium-2509")
+                else:  # No reasoning
+                    mistral_model = "Mistral Small 3.2"
+                    generate_handler.mistral_generate("mistral-small-2506")
+            except:
+                if not mistral_thought:
+                    try:
+                        if question[0] == "@":  # Reasoning
+                            mistral_model = "Mistral Large 3"
+                            generate_handler.mistral_generate("mistral-large-2512")
+                        else:  # No reasoning
+                            mistral_model = "Ministral 3 14B"
+                            generate_handler.mistral_generate("ministral-14b-2512")
+                    except:
+                        if not mistral_thought:
+                            try:
+                                if question[0] == "@":  # Reasoning
+                                    mistral_model = "Mistral Medium 3.1"
+                                    generate_handler.mistral_generate("mistral-medium-2508")
+                                else:  # No reasoning
+                                    mistral_model = "Ministral 3 8B"
+                                    generate_handler.mistral_generate("ministral-8b-2512")
+                            except:
+                                if not mistral_thought:
+                                    try:
+                                        if question[0] == "@":  # Reasoning
+                                            mistral_model = "Magistral Small 1.2"  # this model sucks just check the benchmarks
+                                            generate_handler.mistral_generate("magistral-small-2509")
+                                        else:  # No reasoning
+                                            mistral_model = "Ministral 3 3B"
+                                            generate_handler.mistral_generate("ministral-3b-2512")
+                                    except Exception as e: print(f'Mistral API Key invalid / An error occurred: {e}')
+
 def ask_command(question):
-    global command_response, command_thought, command_model
+    global command_cot, command_response, command_thought, command_model
+    command_cot = ""
     command_thought = False
     command_response = ""
     try:  # Command A
@@ -146,22 +227,22 @@ def ask_command(question):
             command_model = "Command A Reasoning"
             generate_handler.command_generate("command-a-reasoning-08-2025", "enabled")
         else:  # No reasoning
-            if file_handler.command_image:
+            if file_handler.mistral_n_command_image:
                 command_model = "Command A Vision"
-                generate_handler.command_generate("command-a-vision-07-2025", "disabled")
+                generate_handler.command_generate("command-a-vision-07-2025")
             else:
                 command_model = "Command A"
-                generate_handler.command_generate("command-a-03-2025", "disabled")
+                generate_handler.command_generate("command-a-03-2025")
     except:
         if not command_thought:
             try:  # Command R+, fallback if A is not available, doesn't support reasoning and image reading
                 command_model = "Command R+"
-                generate_handler.command_generate("command-r-plus-08-2024", "disabled")
+                generate_handler.command_generate("command-r-plus-08-2024")
             except:
                 if not command_thought:
                     try:  # Command R, fallback if R+ is not available, doesn't support reasoning
                         command_model = "Command R"
-                        generate_handler.command_generate("command-r-08-2024", "disabled")
+                        generate_handler.command_generate("command-r-08-2024")
                     except Exception as e: print(f'Cohere API Key invalid / An error occurred: {e}')
 
 def merge_responses(question):

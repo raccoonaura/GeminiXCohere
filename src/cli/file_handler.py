@@ -2,8 +2,10 @@ from src.cli import response_handler
 from src.cli import file_handler
 from src.cli import utils
 from pathlib import Path
+from google.genai import types
 import subprocess
 import mimetypes
+import requests
 import shutil
 import base64
 import os
@@ -13,9 +15,9 @@ TEMP_DIR = "embeds/temp"
 
 path = os.path.join(BASE_DIR, "embeds", "note.txt")
 gemini_image = []
-command_image = []
+mistral_n_command_image = []
 skip_gemini = False
-skip_command = False
+skip_mistral_n_command = False
 
 def reset_temp():
     if os.path.exists(TEMP_DIR):
@@ -42,24 +44,25 @@ sheet_types = [".xlsx", ".xltx", ".xlsb",
                ".xls", ".xlt",
                ".ods", ".ots",
                ".fods", ".odf",  # untested: xlsb xltm odf, but supposed to be working
-               ".csv", ".tsv",  # not working: tsv, or my tsv testing file is broken
+               ".csv", ".tsv",
                ".json", ".xml", ".yaml"]
+
+image_types = [".png", ".jpg", ".jpeg", ".webp",
+               ".heic", ".heif", ".gif"]
 
 def get_file():
     files = os.listdir("embeds")
     files = [f for f in files if not f.startswith('.') and os.path.isfile(os.path.join("embeds", f))]
     if not files:
-        print(f"Error! There's no file in the embeds folder!\n\n-------------------------\n")
+        print("Error! There's no file in the embeds folder!\n\n-------------------------\n")
         return False
 
     files = [f for f in files
             if os.path.isfile(os.path.join("embeds", f))
-            and any(f.endswith(ext) for ext in doc_types + sheet_types + [".txt", ".md", ".markdown",
-                                                                          ".html", ".htm", ".epub", ".pdf",
-                                                                          ".png", ".jpg", ".jpeg", ".webp",
-                                                                          ".heic", ".heif", ".gif"])]
+            and any(f.endswith(ext) for ext in doc_types + sheet_types + image_types +
+                    [".txt", ".md", ".markdown", ".html", ".htm", ".epub", ".pdf"])]
     if not files:
-        print(f"Error! None of the files in the embeds folder are supported!\n\n-------------------------\n")
+        print("Error! None of the files in the embeds folder are supported!\n\n-------------------------\n")
         return False
 
     utils.set_marker()
@@ -85,7 +88,7 @@ def get_file():
             choice = int(choice)
             name, ext = os.path.splitext(files[choice - 1])
             if 1 <= choice <= len(files):
-                if ext.lower() in [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".gif"]:
+                if ext.lower() in image_types:
                     if files[choice - 1] in image:
                         image.remove(files[choice - 1])
                     else:
@@ -159,19 +162,22 @@ def file_to_libreoffice(path, type):
     return file_handler.TEMP_DIR + "/" + (path.stem + "." + type)
 
 def handle_image(files):
-    global gemini_image, command_image, skip_gemini, skip_command
+    global gemini_image, mistral_n_command_image, skip_gemini, skip_mistral_n_command
     for file in files:
         path = "embeds/" + file
         mime_type, _ = mimetypes.guess_type(path)
-        with open(path, 'rb') as f: image_bytes = f.read()
-        encoded_string = base64.b64encode(image_bytes).decode("utf-8")
+        with open("embeds/Minecraft2.png", "rb") as f:
+            image_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php", data={
+                "reqtype": "fileupload",
+                "time": "1h"
+            }, files={"fileToUpload": f})
         name, ext = os.path.splitext(file)
         if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
-            gemini_image.append({"mime_type":mime_type, "data": image_bytes})
-            command_image.append(f"data:{mime_type};base64,{encoded_string}")
+            gemini_image.append({"mime_type":mime_type, "data": requests.get(image_url.text).content})
+            mistral_n_command_image.append(image_url.text)
         elif ext.lower() in [".heic", ".heif"]:
-            gemini_image.append({"mime_type":mime_type, "data": image_bytes})
-            skip_command = True
+            gemini_image.append({"mime_type":mime_type, "data": requests.get(image_url.text).content})
+            skip_mistral_n_command = True
         elif ext.lower() in ".gif":
-            command_image.append(f"data:{mime_type};base64,{encoded_string}")
+            mistral_n_command_image.append(image_url.text)
             skip_gemini = True
