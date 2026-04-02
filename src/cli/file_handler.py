@@ -166,7 +166,7 @@ def handle_image(files):
     for file in files:
         path = "embeds/" + file
         mime_type, _ = mimetypes.guess_type(path)
-        with open("embeds/Minecraft2.png", "rb") as f:
+        with open(path, "rb") as f:
             image_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php", data={
                 "reqtype": "fileupload",
                 "time": "1h"

@@ -118,8 +118,7 @@ def ask_gemini(question):
                     generate_handler.gemini_generate("gemini-3-flash-preview", True)
                 else:  # No reasoning
                     generate_handler.gemini_generate("gemini-3-flash-preview")
-            except Exception as e:
-                print(e)
+            except:
                 if not gemini_thought:
                     try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
                         if response_handler.spreadsheet: raise utils.Error("Skipping Gemini 3 for TAG")
@@ -128,8 +127,7 @@ def ask_gemini(question):
                             generate_handler.gemini_generate("gemini-3.1-flash-lite-preview", True)
                         else:  # No reasoning
                             generate_handler.gemini_generate("gemini-3.1-flash-lite-preview")
-                    except Exception as e:
-                        print(e)
+                    except:
                         if not gemini_thought:
                             try:  # Gemini 2.5 Pro, it doesn't support NO reasoning
                                 if question[0] == "@":  # Reasoning

@@ -81,11 +81,11 @@ def gemini_generate(model, boolean=False):
     print ("\n\n-------------------------\n")
 
 def mistral_generate(model, boolean=False):
-    if boolean:
-        if response_handler.context:  # TODO: add context thingies
+    if boolean and model=="mistral-small-2603":
+        if response_handler.context:
             res = model_client.mistral_client.chat.stream(
                 model = model,
-                messages = model_client.mistral_messages,
+                messages = model_client.mistral_messages + [{"role": "system", "content": response_handler.context}],
                 reasoning_effort="high"
             )
         else:
@@ -95,10 +95,10 @@ def mistral_generate(model, boolean=False):
                 reasoning_effort="high"
             )
     else:
-        if response_handler.context:  # TODO: add context thingies
+        if response_handler.context:
             res = model_client.mistral_client.chat.stream(
                 model = model,
-                messages = model_client.mistral_messages
+                messages = model_client.mistral_messages + [{"role": "system", "content": response_handler.context}]
             )
         else:
             res = model_client.mistral_client.chat.stream(
@@ -123,17 +123,18 @@ def mistral_generate(model, boolean=False):
             elif re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0])):
                 match = re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0]))
         if match:
-            # print(ast.literal_eval(f"'''{match.group(1)}'''"), end="")
+            if file_handler.skip_gemini: print(ast.literal_eval(f"'''{match.group(1)}'''"), end="")
             model_client.mistral_cot += ast.literal_eval(f"'''{match.group(1)}'''")  # literal bulletproof (probably)
         else:
             if model_client.mistral_thought is False:
+                if file_handler.skip_gemini: utils.clear_all
                 model_client.mistral_thought = True
                 model_client.mistral_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                 model_client.mistral_start_generating = time.perf_counter()
-            # print(chunk.data.choices[0].delta.content, end="")
+            if file_handler.skip_gemini: print(chunk.data.choices[0].delta.content, end="")
             model_client.mistral_response += chunk.data.choices[0].delta.content
     model_client.mistral_end_generating = f"{time.perf_counter() - model_client.mistral_start_generating:.3f}"
-    # print ("\n\n-------------------------\n")  TODO: command is doing the job here
+    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def command_generate(model, value="disabled"):
     if response_handler.context:
@@ -161,12 +162,11 @@ def command_generate(model, value="disabled"):
                 # print(event.delta.message.content.text, end = "")
                 model_client.command_response += event.delta.message.content.text
     model_client.command_end_generating = f"{time.perf_counter() - model_client.command_start_generating:.3f}"
-    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
 
 def gemini_merge(model, boolean):
     instruction = f"""
-You're a helpful assistant for merging two model's responses
-Merge both responses into one comprehensive answer
+You're a helpful assistant for merging three model's responses
+Merge all responses into one comprehensive answer
 1. Use response 1 as the foundation
 2. Integrate unique points from the other responses
 3. Add relevant insights these three responses missed
@@ -180,6 +180,22 @@ Response 2:
 {model_client.mistral_response}
 
 Response 3:
+{model_client.command_response}
+
+{response_handler.context}
+""" if file_handler.skip_mistral_n_command else f"""
+You're a helpful assistant for merging two model's responses
+Merge both responses into one comprehensive answer
+1. Use response 1 as the foundation
+2. Integrate unique points from the other response
+3. Add relevant insights both responses missed
+4. Do not include any preamble, headers, or concluding remarks
+5. Start the response immediately with the integrated content
+
+Response 1:
+{model_client.mistral_response}
+
+Response 2:
 {model_client.command_response}
 
 {response_handler.context}

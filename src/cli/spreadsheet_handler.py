@@ -87,7 +87,6 @@ You are an expert SQL analyst. Your goal is to help users query data from multip
 The following metadata describes the available tables and their structures:
 {datas}
 """
-    raise SystemExit(0)  # debug
 
 def sql_query(query: str):
     """Run a SQL SELECT query on a SQLite database and return the results."""
