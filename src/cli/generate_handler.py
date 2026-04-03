@@ -170,6 +170,22 @@ def command_generate(model, value="disabled"):
 
 def gemini_merge(model, boolean):
     instruction = f"""
+You're a helpful assistant for merging two model's responses
+Merge both responses into one comprehensive answer
+1. Use response 1 as the foundation
+2. Integrate unique points from the other response
+3. Add relevant insights both responses missed
+4. Do not include any preamble, headers, or concluding remarks
+5. Start the response immediately with the integrated content
+
+Response 1:
+{model_client.mistral_response}
+
+Response 2:
+{model_client.command_response}
+
+{response_handler.context}
+""" if file_handler.skip_gemini else f"""
 You're a helpful assistant for merging three model's responses
 Merge all responses into one comprehensive answer
 1. Use response 1 as the foundation
@@ -185,22 +201,6 @@ Response 2:
 {model_client.mistral_response}
 
 Response 3:
-{model_client.command_response}
-
-{response_handler.context}
-""" if file_handler.skip_mistral_n_command else f"""
-You're a helpful assistant for merging two model's responses
-Merge both responses into one comprehensive answer
-1. Use response 1 as the foundation
-2. Integrate unique points from the other response
-3. Add relevant insights both responses missed
-4. Do not include any preamble, headers, or concluding remarks
-5. Start the response immediately with the integrated content
-
-Response 1:
-{model_client.mistral_response}
-
-Response 2:
 {model_client.command_response}
 
 {response_handler.context}

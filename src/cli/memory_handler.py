@@ -103,24 +103,24 @@ def log_interaction(question, gemini_response, mistral_response, command_respons
         question = question[1:]
     if model_client.gemini_cot:
         with open("logs/replies/gemini_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.gemini_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model thought process:\n\n" + model_client.gemini_cot + "\n\n---\n---\n\n" + "Model:\n\n" + gemini_response + "\n\n---\n---\n\n")
     else:
         with open("logs/replies/gemini_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model:\n\n" + gemini_response + "\n\n---\n---\n\n")
     if model_client.mistral_cot:
         with open("logs/replies/mistral_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.mistral_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model thought process:\n\n" + model_client.mistral_cot + "\n\n---\n---\n\n" + "Model:\n\n" + mistral_response + "\n\n---\n---\n\n")
     else:
         with open("logs/replies/mistral_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model:\n\n" + mistral_response + "\n\n---\n---\n\n")
     if model_client.command_cot:
         with open("logs/replies/command_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.command_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model thought process:\n\n" + model_client.command_cot + "\n\n---\n---\n\n" + "Model:\n\n" + command_response + "\n\n---\n---\n\n")
     else:
         with open("logs/replies/command_log.md", "a", encoding="utf-8") as file:
-            file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
+            file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model:\n\n" + command_response + "\n\n---\n---\n\n")
     with open("logs/replies/merged_log.md", "a", encoding="utf-8") as file:
-        file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
+        file.write("User:\n\n" + question + "\n\n---\n---\n\n" + "Model:\n\n" + merged_response + "\n\n---\n---\n\n")
 
 def reset_errors():
     if os.path.exists(ERRS_DIR):
