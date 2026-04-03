@@ -42,7 +42,8 @@ def handle_spreadsheets(files):
         elif ext.lower() in [".xml"]:
             root = ET.parse(path).getroot()  # 拆解xml
             tags = set()  # 合集 跟list一樣 只是沒有排序 也不會有重複的物品
-            for elem in root.iter(): tags.add(elem.tag)  # 如果你願意一層一層一層的剝開xml檔 把每個找到的不同標籤加進合集裡
+            for elem in root.iter():
+                tags.add(elem.tag)  # 如果你願意一層一層一層的剝開xml檔 把每個找到的不同標籤加進合集裡
             for xpath in common_xpaths:  # 嘗試每一個常見的XPath
                 if xpath == "empty":
                     df = pd.read_xml(path, parse_dates=True)
@@ -51,23 +52,28 @@ def handle_spreadsheets(files):
                     df = pd.read_xml(path, xpath=xpath, parse_dates=True)
                     break  # 中獎的話就用那個找資料
         elif ext.lower() in [".json"]:
-            with open(path, "r", encoding="utf-8") as f: df = pd.json_normalize(json.load(f))  # 把巢狀json扁平化 接著做跟read_json一樣的事
+            with open(path, "r", encoding="utf-8") as f:
+                df = pd.json_normalize(json.load(f))  # 把巢狀json扁平化 接著做跟read_json一樣的事
         elif ext.lower() in [".yaml"]:  # pandas不支援這個東東 fair因為我這輩子沒看過這種檔案類型
-            with open(path, "r", encoding="utf-8") as f: df = pd.DataFrame(yaml.safe_load(f))
-        if len(df) == 0: return "error!"  # 如果dataframe是空的 放檔案這個人蠻厲害的
+            with open(path, "r", encoding="utf-8") as f:
+                df = pd.DataFrame(yaml.safe_load(f))
+        if len(df) == 0:
+            return "error!"  # 如果dataframe是空的 放檔案這個人蠻厲害的
         datas = []
         if isinstance(df, dict):
             for sheet_title, sheet_df in df.items():
-                if sheet_title: sheet_title = name + "_" + sheet_title + ext
-                else: sheet_title = file  # fixes yaml
+                if sheet_title:
+                    sheet_title = name + "_" + sheet_title + ext
+                else:
+                    sheet_title = file  # fixes yaml
                 data = []
-                sheet_df.to_sql(sheet_title, sqlite3.connect("caches/database.db"), if_exists="replace")
+                sheet_df.to_sql(sheet_title, sqlite3.connect("logs/caches/database.db"), if_exists="replace")
                 for col in sheet_df.columns:  # 在dataframe裡一行一行掃描 儲存那行的名稱 儲存的資料類型(str, datetime, etc.) 還有前面三行是什麼
                     data.append({"name": col, "datatype": str(sheet_df[col].dtype), "example": sheet_df[col].head(3).tolist()})
                 datas.append({"table": sheet_title, "columns": data})
         else:
             data = []
-            df.to_sql(file, sqlite3.connect("caches/database.db"), if_exists="replace")  # 建立一個db檔案來存放dataframe 如果檔案已經存在 取代原本檔案
+            df.to_sql(file, sqlite3.connect("logs/caches/database.db"), if_exists="replace")  # 建立一個db檔案來存放dataframe 如果檔案已經存在 取代原本檔案
             for col in df.columns:  # 在dataframe裡一行一行掃描 儲存那行的名稱 儲存的資料類型(str, datetime, etc.) 還有前面三行是什麼
                 data.append({"name": col, "datatype": str(df[col].dtype), "example": df[col].head(3).tolist()})
             datas = [{"table": file, "columns": data}]
@@ -90,4 +96,4 @@ The following metadata describes the available tables and their structures:
 
 def sql_query(query: str):
     """Run a SQL SELECT query on a SQLite database and return the results."""
-    return pd.read_sql_query(query, sqlite3.connect("caches/database.db")).to_dict(orient="records")
+    return pd.read_sql_query(query, sqlite3.connect("logs/caches/database.db")).to_dict(orient="records")

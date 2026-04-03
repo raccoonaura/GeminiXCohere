@@ -8,6 +8,7 @@ question = ""
 
 if __name__ == "__main__":
     memory_handler.reset_logs()
+    memory_handler.reset_errors()
     memory_handler.reset_caches()
     file_handler.reset_temp()
 model_client.initialize_gemini()
@@ -21,8 +22,10 @@ while question.strip() == "" or question.strip() == "$@" or question.strip() == 
     utils.clear_all()
     try:
         question = input("Hello! How can I assist you today? ")
-        if question[0:2].strip() == "@$": question = question[1] + question[0] + question[2:]
-    except: continue
+        if question[0:2].strip() == "@$":
+            question = question[1] + question[0] + question[2:]
+    except Exception as e:
+        memory_handler.log_errors(e)
 
 while True:
     response_handler.handle_conversation(question)
@@ -32,5 +35,7 @@ while True:
         utils.clear_screen()
         try:
             question = input("Your turn: ")
-            if question[0:2].strip() == "@$": question = question[1] + question[0] + question[2:]
-        except: continue
+            if question[0:2].strip() == "@$":
+                question = question[1] + question[0] + question[2:]
+        except Exception as e:
+            memory_handler.log_errors(e)

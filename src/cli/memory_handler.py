@@ -8,9 +8,10 @@ import hashlib
 import json
 import datetime
 
-LOGS_DIR = "logs"  # reading purposes
-CACHES_DIR = "caches"  # to detect similar / same prompt
-HISTORIES_DIR = "histories"  # for chat histories
+LOGS_DIR = "logs/replies"  # reading purposes
+ERRS_DIR = "logs/errors"  # debugging purposes
+CACHES_DIR = "logs/caches"  # to detect similar / same prompt
+HISTORIES_DIR = "logs/histories"  # for chat histories
 threshold = 90
 match = None
 current_history = ""
@@ -19,8 +20,10 @@ mistral_histories = []
 command_histories = []
 
 def memorize_question(question):
-    if question[0] == "$": question = question[1:]
-    if question[0] == "@": question = question[1:]
+    if question[0] == "$":
+        question = question[1:]
+    if question[0] == "@":
+        question = question[1:]
     gemini_histories.append({"role": "user", "parts": [{"text": question}]})
     mistral_histories.append({"role": "user", "content": question})
     command_histories.append({"role": "user", "content": question})
@@ -72,28 +75,26 @@ def memorize_response():
 
     if not current_history:
         data = {'gemini': gemini_histories, 'mistral': mistral_histories, 'command': command_histories}
-        dt = datetime.datetime.now()
-        now = dt.strftime('%Y-%m-%d-%H-%M-%S')
-        current_history = f'{now}.json'
-        with open("histories/" + current_history, 'w', encoding="utf8") as f:
+        current_history = f'{datetime.datetime.now().strftime('%m-%d-%Y-%H-%M-%S')}'
+        with open("logs/histories/" + current_history + ".json", 'w', encoding="utf8") as f:
             json.dump(data, f, ensure_ascii=False)
     else:
         data = {'gemini': gemini_histories, 'mistral': mistral_histories, 'command': model_client.command_messages}
-        with open("histories/" + current_history, 'w', encoding="utf8") as f:
+        with open("logs/histories/" + current_history + ".json", 'w', encoding="utf8") as f:
             json.dump(data, f, ensure_ascii=False)
 
 def reset_logs():
     if os.path.exists(LOGS_DIR):
         shutil.rmtree(LOGS_DIR)
     os.makedirs(LOGS_DIR)
-    with open("logs/gemini_log.md", "w", encoding="utf-8") as file:
-        pass
-    with open("logs/mistral_log.md", "w", encoding="utf-8") as file:
-        pass
-    with open("logs/command_log.md", "w", encoding="utf-8") as file:
-        pass
-    with open("logs/merged_log.md", "w", encoding="utf-8") as file:
-        pass
+    with open("logs/replies/gemini_log.md", "w", encoding="utf-8") as file:
+        file
+    with open("logs/replies/mistral_log.md", "w", encoding="utf-8") as file:
+        file
+    with open("logs/replies/command_log.md", "w", encoding="utf-8") as file:
+        file
+    with open("logs/replies/merged_log.md", "w", encoding="utf-8") as file:
+        file
 
 def log_interaction(question, gemini_response, mistral_response, command_response, merged_response):
     if question[0] == "$":  # Reasoning
@@ -101,25 +102,41 @@ def log_interaction(question, gemini_response, mistral_response, command_respons
     if question[0] == "@":  # Reasoning
         question = question[1:]
     if model_client.gemini_cot:
-        with open("logs/gemini_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/gemini_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.gemini_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
     else:
-        with open("logs/gemini_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/gemini_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + gemini_response + "\n\n====================================================================================================\n\n")
     if model_client.mistral_cot:
-        with open("logs/mistral_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/mistral_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.mistral_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
     else:
-        with open("logs/mistral_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/mistral_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + mistral_response + "\n\n====================================================================================================\n\n")
     if model_client.command_cot:
-        with open("logs/command_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/command_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model thought process:\n\n" + model_client.command_cot + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
     else:
-        with open("logs/command_log.md", "a", encoding="utf-8") as file:
+        with open("logs/replies/command_log.md", "a", encoding="utf-8") as file:
             file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + command_response + "\n\n====================================================================================================\n\n")
-    with open("logs/merged_log.md", "a", encoding="utf-8") as file:
+    with open("logs/replies/merged_log.md", "a", encoding="utf-8") as file:
         file.write("User:\n\n" + question + "\n\n====================================================================================================\n\n" + "Model:\n\n" + merged_response + "\n\n====================================================================================================\n\n")
+
+def reset_errors():
+    if os.path.exists(ERRS_DIR):
+        shutil.rmtree(ERRS_DIR)
+    os.makedirs(ERRS_DIR)
+
+def log_errors(e):
+    global current_history
+    if not current_history:
+        current_history = f'{datetime.datetime.now().strftime('%m-%d-%Y-%H-%M-%S')}'
+    with open("logs/errors/" + current_history + ".txt", 'a', encoding="utf8") as f:
+        f.write(
+            "[" + datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3] + "] " + e + "\n"  # monitoring milliseconds as well
+            if isinstance(e, str) else
+            "[" + datetime.datetime.now().strftime('%H:%M:%S.%f')[:-3] + "] " + str(e) + "\n"
+        )
 
 def reset_caches():
     if os.path.exists(CACHES_DIR):
@@ -156,8 +173,10 @@ def write_to_caches(question: str, response: str):
 
 def choose_history():
     global current_history
-    if os.path.exists(HISTORIES_DIR): pass
-    else: os.makedirs(HISTORIES_DIR)
+    if os.path.exists(HISTORIES_DIR):
+        pass
+    else:
+        os.makedirs(HISTORIES_DIR)
     filename = "(Not selected)"
     utils.set_marker()
     new_chat_number = len(os.listdir(HISTORIES_DIR)) + 1
@@ -177,15 +196,17 @@ def choose_history():
                 utils.clear_screen()
                 continue
             if choice == "done":
-                if filename == "(Not selected)": continue
+                if filename == "(Not selected)":
+                    continue
                 utils.clear_screen()
                 current_history = filename
-                with open("histories/" + filename, 'r', encoding="utf8") as f:
+                with open("logs/histories/" + filename, 'r', encoding="utf8") as f:
                     data = json.load(f)
                     model_client.gemini_messages = data['gemini']
                     model_client.command_messages = data['command']
                     return
-            if choice.isdigit(): choice = int(choice)
+            if choice.isdigit():
+                choice = int(choice)
             else:
                 utils.clear_screen()
                 continue
@@ -199,6 +220,6 @@ def choose_history():
             else:
                 utils.clear_screen()
         except Exception as e:
+            log_errors(e)
             utils.clear_screen()
-            print(e)
             continue

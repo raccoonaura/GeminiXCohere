@@ -71,7 +71,8 @@ def gemini_generate(model, boolean=False):
                 model_client.gemini_cot += part.text
             else:
                 if model_client.gemini_thought is False:
-                    if boolean: utils.clear_screen()
+                    if boolean:
+                        utils.clear_screen()
                     model_client.gemini_thought = True
                     model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                     model_client.gemini_start_generating = time.perf_counter()
@@ -123,18 +124,22 @@ def mistral_generate(model, boolean=False):
             elif re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0])):
                 match = re.search(r'text="([^"]*)"', str(chunk.data.choices[0].delta.content[0]))
         if match:
-            if file_handler.skip_gemini: print(ast.literal_eval(f"'''{match.group(1)}'''"), end="")
+            if file_handler.skip_gemini:
+                print(ast.literal_eval(f"'''{match.group(1)}'''"), end="")
             model_client.mistral_cot += ast.literal_eval(f"'''{match.group(1)}'''")  # literal bulletproof (probably)
         else:
             if model_client.mistral_thought is False:
-                if file_handler.skip_gemini: utils.clear_all
+                if file_handler.skip_gemini:
+                    utils.clear_all
                 model_client.mistral_thought = True
                 model_client.mistral_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                 model_client.mistral_start_generating = time.perf_counter()
-            if file_handler.skip_gemini: print(chunk.data.choices[0].delta.content, end="")
+            if file_handler.skip_gemini:
+                print(chunk.data.choices[0].delta.content, end="")
             model_client.mistral_response += chunk.data.choices[0].delta.content
     model_client.mistral_end_generating = f"{time.perf_counter() - model_client.mistral_start_generating:.3f}"
-    if file_handler.skip_gemini: print ("\n\n-------------------------\n")
+    if file_handler.skip_gemini:
+        print ("\n\n-------------------------\n")
 
 def command_generate(model, value="disabled"):
     if response_handler.context:

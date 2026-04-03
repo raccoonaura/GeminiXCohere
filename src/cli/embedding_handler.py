@@ -1,5 +1,6 @@
 from google.genai import types
 from src.cli import embedding_handler
+from src.cli import memory_handler
 from src.cli import model_client
 from src.cli import utils
 from sklearn.metrics.pairwise import cosine_similarity
@@ -71,7 +72,8 @@ def chunk_by_sentence(text, max_length, overlap):  # 我決定把每一句留下
     return chunks
 
 def embedding(question, text):
-    if text == "error!": return "error!"
+    if text == "error!":
+        return "error!"
     question = question[1:]
     utils.set_marker()
     print("Chunking...")
@@ -94,27 +96,32 @@ def embedding(question, text):
         query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
         query_embedding = np.array(query_embedding)
         doc_embeddings = np.array(doc_embeddings)
-    except:
+    except Exception as e:
+        memory_handler.log_errors(e)
         try:
             model_client.embed_model = "Gemini Embedding 2"
             query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-2-preview", allchunks)
-        except:
+        except Exception as e:
+            memory_handler.log_errors(e)
             try:
                 model_client.embed_model = "Gemini Embedding"
                 query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
-            except:
+            except Exception as e:
+                memory_handler.log_errors(e)
                 try:
                     model_client.embed_model = "Embed 3"
                     query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
                     query_embedding = np.array(query_embedding)
                     doc_embeddings = np.array(doc_embeddings)
-                except:
+                except Exception as e:
+                    memory_handler.log_errors(e)
                     try:
                         model_client.embed_model = "Embed Light 3"
                         query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
                         query_embedding = np.array(query_embedding)
                         doc_embeddings = np.array(doc_embeddings)
                     except Exception as e:
+                        memory_handler.log_errors(e)
                         model_client.embed_model = ""
                         print("An error occurred while embedding: ", e)
                         return "error!"
@@ -138,25 +145,29 @@ def embedding(question, text):
         context_parts = embedding_handler.rerank_rerank("rerank-v4.0-pro", top_k_results, question)
         utils.clear_screen()
         print("Reranking... Done!")
-    except:
+    except Exception as e:
+        memory_handler.log_errors(e)
         try:
             model_client.rerank_model = "Rerank 4 Fast"
             context_parts = embedding_handler.rerank_rerank("rerank-v4.0-fast", top_k_results, question)
             utils.clear_screen()
             print("Reranking... Done!")
-        except:
+        except Exception as e:
+            memory_handler.log_errors(e)
             try:
                 model_client.rerank_model = "Rerank 3.5"
                 context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
                 utils.clear_screen()
                 print("Reranking... Done!")
-            except:
+            except Exception as e:
+                memory_handler.log_errors(e)
                 try:
                     model_client.rerank_model = "Rerank 3"
                     context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
                     utils.clear_screen()
                     print("Reranking... Done!")
-                except:
+                except Exception as e:
+                    memory_handler.log_errors(e)
                     model_client.rerank_model = ""
                     top_k_indices = np.argsort(similarities)[::-1][:3]
                     context_parts = []

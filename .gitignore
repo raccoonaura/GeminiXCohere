@@ -1,7 +1,8 @@
-caches/
-logs/
-histories/
-embeds/temp
+logs/caches/
+logs/errors/
+logs/replies/
+logs/histories/
+embeds/temp/
 .gradio/
 .venv/
 env/
@@ -19,3 +20,5 @@ Thumbs.db
 htmlcov/
 .coverage
 src/cli/temp.py
+.env
+src/cli/file_handler.py

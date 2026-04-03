@@ -1,13 +1,12 @@
 from src.cli import response_handler
+from src.cli import memory_handler
 from src.cli import file_handler
 from src.cli import utils
 from pathlib import Path
-from google.genai import types
 import subprocess
 import mimetypes
 import requests
 import shutil
-import base64
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -106,7 +105,8 @@ def get_file():
                 utils.clear_screen()
             else:
                 utils.clear_screen()
-        except:
+        except Exception as e:
+            memory_handler.log_errors(e)
             utils.clear_screen()
             continue
 
@@ -133,13 +133,15 @@ def file_to_libreoffice(path, type):
                 ["flatpak", "info", "org.libreoffice.LibreOffice"], 
                 capture_output=True, text=True
             )
-            if result.returncode == 0: soffice = ["flatpak", "run", "org.libreoffice.LibreOffice"]
+            if result.returncode == 0:
+                soffice = ["flatpak", "run", "org.libreoffice.LibreOffice"]
         if shutil.which("flatpak-spawn"):  # checks if the ide is installed with flatpak as well
             result = subprocess.run(
                 ["flatpak-spawn", "--host", "flatpak", "info", "org.libreoffice.LibreOffice"], 
                 capture_output=True, text=True
             )
-            if result.returncode == 0: soffice = ["flatpak-spawn", "--host", "flatpak", "run", "org.libreoffice.LibreOffice"]
+            if result.returncode == 0:
+                soffice = ["flatpak-spawn", "--host", "flatpak", "run", "org.libreoffice.LibreOffice"]
 
     if not soffice:  # 確認LibreOffice是否存在
         raise RuntimeError("LibreOffice not found! Please install it before continuing!")
@@ -158,7 +160,8 @@ def file_to_libreoffice(path, type):
             f"cmd: {' '.join(cmd)}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
     for f in Path(file_handler.TEMP_DIR).glob("*"):
-        if f.is_file() and f.suffix.lower() != "." + type: f.unlink()  # 刪除指定檔案類型以外的東西 (通常是圖片)
+        if f.is_file() and f.suffix.lower() != "." + type:
+            f.unlink()  # 刪除指定檔案類型以外的東西 (通常是圖片)
     return file_handler.TEMP_DIR + "/" + (path.stem + "." + type)
 
 def handle_image(files):

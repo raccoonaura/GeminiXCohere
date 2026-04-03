@@ -23,20 +23,26 @@ def handle_document(files):
         path = "embeds/" + file
         name, ext = os.path.splitext(path)
         if ext.lower() in [".txt", ".md", ".markdown"]:
-            with open(path, "r", encoding="utf-8") as f: text.append(f.read())
-        elif ext.lower() in [".epub"]: text.append(epub_to_md(path))
-        elif ext.lower() in [".pdf"]: text.append(pdf_to_md(path))
-        elif ext.lower() in [".html", ".htm"]: text.append(html_to_md(path))
+            with open(path, "r", encoding="utf-8") as f:
+                text.append(f.read())
+        elif ext.lower() in [".epub"]:
+            text.append(epub_to_md(path))
+        elif ext.lower() in [".pdf"]:
+            text.append(pdf_to_md(path))
+        elif ext.lower() in [".html", ".htm"]:
+            text.append(html_to_md(path))
         elif ext.lower() in file_handler.doc_types:
             print("Might take a while if the file contains multiple images!")
             text.append(html_to_md(file_handler.file_to_libreoffice(path, "html")))
-        if "error!" in text: return "error!"
+        if "error!" in text:
+            return "error!"
     utils.clear_screen()
     print("Converting...Done!")
     return "\n\n".join(text)
 
 def html_to_md(path):
-    if path is RuntimeError: return "error!"
+    if path is RuntimeError:
+        return "error!"
     html = Path(path).read_text(encoding="utf-8", errors="ignore")
     return handler.handle(html)
 
