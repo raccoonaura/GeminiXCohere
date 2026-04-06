@@ -166,21 +166,33 @@ def file_to_libreoffice(path, type):
 
 def handle_image(files):
     global gemini_image, mistral_n_command_image, skip_gemini, skip_mistral_n_command
+    for file in files:  # checks if 
+        name, ext = os.path.splitext(file)
+        if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
+            pass
+        elif ext.lower() in [".heic", ".heif"]:
+            skip_mistral_n_command = True
+        elif ext.lower() == ".gif":
+            skip_gemini = True
+    if file_handler.skip_gemini and file_handler.skip_mistral_n_command:
+        print("The image types you provided are partially unsupported by each model!\n\n-------------------------\n")
+        return "error!"
+    image_count = 0
     for file in files:
+        utils.set_marker()
+        image_count += 1
+        print(f"Handling image {image_count}/{len(files)}...")
         path = "embeds/" + file
-        mime_type, _ = mimetypes.guess_type(path)
         with open(path, "rb") as f:
-            image_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php", data={
-                "reqtype": "fileupload",
-                "time": "1h"
-            }, files={"fileToUpload": f})
+            image_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php",
+            data={"reqtype": "fileupload", "time": "1h"}, files={"fileToUpload": f})
+        mime_type, _ = mimetypes.guess_type(path)
         name, ext = os.path.splitext(file)
         if ext.lower() in [".png", ".jpg", ".jpeg", ".webp"]:
             gemini_image.append({"mime_type":mime_type, "data": requests.get(image_url.text).content})
             mistral_n_command_image.append(image_url.text)
         elif ext.lower() in [".heic", ".heif"]:
             gemini_image.append({"mime_type":mime_type, "data": requests.get(image_url.text).content})
-            skip_mistral_n_command = True
-        elif ext.lower() in ".gif":
+        elif ext.lower() == ".gif":
             mistral_n_command_image.append(image_url.text)
-            skip_gemini = True
+        utils.clear_screen()
