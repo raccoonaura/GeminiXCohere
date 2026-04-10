@@ -199,7 +199,8 @@ def choose_history():
                 if filename == "(Not selected)":
                     continue
                 utils.clear_screen()
-                current_history = filename
+                name, ext = os.path.splitext(filename)
+                current_history = name
                 with open("logs/histories/" + filename, 'r', encoding="utf8") as f:
                     data = json.load(f)
                     model_client.gemini_messages = data['gemini']
