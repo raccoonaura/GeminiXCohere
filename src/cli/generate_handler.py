@@ -20,8 +20,7 @@ def gemini_generate(model, boolean=False):
                     # 3 Flash and Flash Lite supports "high", "medium", "low", "minimal"
                     include_thoughts = boolean
                 ),
-                system_instruction = response_handler.context,
-                tools = [spreadsheet_handler.sql_query]
+                system_instruction = response_handler.context
             )
         else:
             config = types.GenerateContentConfig(

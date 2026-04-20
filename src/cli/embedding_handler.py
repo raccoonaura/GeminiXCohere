@@ -1,6 +1,4 @@
 from google.genai import types
-from src.cli import embedding_handler
-from src.cli import memory_handler
 from src.cli import model_client
 from src.cli import utils
 from sklearn.metrics.pairwise import cosine_similarity
@@ -91,40 +89,9 @@ def embedding(question, text):
     print("Chunking... Done!")
     utils.set_marker()
     print("Embedding...")
-    try:
-        model_client.embed_model = "Embed 4"
-        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
-        query_embedding = np.array(query_embedding)
-        doc_embeddings = np.array(doc_embeddings)
-    except Exception as e:
-        memory_handler.log_errors(e)
-        try:
-            model_client.embed_model = "Gemini Embedding 2"
-            query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-2-preview", allchunks)
-        except Exception as e:
-            memory_handler.log_errors(e)
-            try:
-                model_client.embed_model = "Gemini Embedding"
-                query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
-            except Exception as e:
-                memory_handler.log_errors(e)
-                try:
-                    model_client.embed_model = "Embed 3"
-                    query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
-                    query_embedding = np.array(query_embedding)
-                    doc_embeddings = np.array(doc_embeddings)
-                except Exception as e:
-                    memory_handler.log_errors(e)
-                    try:
-                        model_client.embed_model = "Embed Light 3"
-                        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
-                        query_embedding = np.array(query_embedding)
-                        doc_embeddings = np.array(doc_embeddings)
-                    except Exception as e:
-                        memory_handler.log_errors(e)
-                        model_client.embed_model = ""
-                        print("An error occurred while embedding: ", e)
-                        return "error!"
+    query_embedding, doc_embeddings = model_client.choose_embed_model(allchunks)
+    if query_embedding.size == "error!" or doc_embeddings.size == "error!":
+        return "error!"
     if query_embedding.size == 0 or doc_embeddings.size == 0:
         print("An error occurred while embedding! The rate limit might be reached!")
         return "error!"
@@ -140,41 +107,7 @@ def embedding(question, text):
     print("Calculating... Done!")
     utils.set_marker()
     print("Reranking...")
-    try:
-        model_client.rerank_model = "Rerank 4 Pro"
-        context_parts = embedding_handler.rerank_rerank("rerank-v4.0-pro", top_k_results, question)
-        utils.clear_screen()
-        print("Reranking... Done!")
-    except Exception as e:
-        memory_handler.log_errors(e)
-        try:
-            model_client.rerank_model = "Rerank 4 Fast"
-            context_parts = embedding_handler.rerank_rerank("rerank-v4.0-fast", top_k_results, question)
-            utils.clear_screen()
-            print("Reranking... Done!")
-        except Exception as e:
-            memory_handler.log_errors(e)
-            try:
-                model_client.rerank_model = "Rerank 3.5"
-                context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
-                utils.clear_screen()
-                print("Reranking... Done!")
-            except Exception as e:
-                memory_handler.log_errors(e)
-                try:
-                    model_client.rerank_model = "Rerank 3"
-                    context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
-                    utils.clear_screen()
-                    print("Reranking... Done!")
-                except Exception as e:
-                    memory_handler.log_errors(e)
-                    model_client.rerank_model = ""
-                    top_k_indices = np.argsort(similarities)[::-1][:3]
-                    context_parts = []
-                    for rank, idx in enumerate(top_k_indices, 1):
-                        context_parts.append(f"[Reference material {rank}] (Similarity: {similarities[idx]:.2f})\n{allchunks[idx]}")
-                    utils.clear_screen()
-                    print("Reranking... Skipped! The rate limit might be reached!")
+    context_parts = model_client.choose_rerank_model(similarities, top_k_results, question, allchunks)
     return "Reference materials and contexts:\n\n" + "\n\n".join(context_parts) + "\n\nDo not refer to the provided information as 'snippets,' 'sections,' 'parts,' or by any implied numerical order."
 
 def gemini_embed(model, allchunks):
@@ -188,6 +121,22 @@ def gemini_embed(model, allchunks):
     query_embedding = embeddings[0:1]
     doc_embeddings = embeddings[1:]
     return query_embedding, doc_embeddings
+
+def mistral_embed(model, allchunks):
+    query = allchunks[0:1]
+    chunks = allchunks[1:]
+    query_res = model_client.mistral_client.embeddings.create(
+        inputs=query,
+        model=model
+    )
+    chunks_res = []
+    for chunk in chunks:
+        vector = model_client.mistral_client.embeddings.create(
+            inputs=chunk,
+            model=model
+        )
+        chunks_res.append(vector.data[0].embedding)
+    return np.array([query_res.data[0].embedding]), np.array(chunks_res)
 
 def embed_embed(model, allchunks):  # like, thats the name of cohere's embed model, what can i say
     query = allchunks[0:1]
@@ -205,9 +154,7 @@ def embed_embed(model, allchunks):  # like, thats the name of cohere's embed mod
         input_type="search_document",
         embedding_types=["float"]
     )
-    query_embedding = query_res.embeddings.float
-    doc_embeddings = chunks_res.embeddings.float
-    return query_embedding, doc_embeddings
+    return np.array(query_res.embeddings.float), np.array(chunks_res.embeddings.float)
 
 def rerank_rerank(model, top_k_results, question):  # yes, thats the name of cohere's rerank model
     results = model_client.cohere_client.rerank(

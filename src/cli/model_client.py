@@ -1,11 +1,13 @@
 from google.genai import Client
 from mistralai.client import Mistral
 from cohere import ClientV2
+from src.cli import embedding_handler
 from src.cli import response_handler
 from src.cli import generate_handler
 from src.cli import memory_handler
 from src.cli import file_handler
 from src.cli import utils
+import numpy as np
 import time
 import os
 
@@ -237,20 +239,33 @@ def ask_mistral(question):
                                 if not mistral_thought:
                                     try:
                                         if question[0] == "@":  # Reasoning
-                                            mistral_model = "Magistral Small 1.2"  # this model sucks just check the benchmarks
-                                            generate_handler.mistral_generate("magistral-small-2509")
+                                            mistral_model = "Mistral Medium 3"
+                                            generate_handler.mistral_generate("mistral-medium-2505")
                                         else:  # No reasoning
-                                            mistral_model = "Ministral 3 3B"
-                                            generate_handler.mistral_generate("ministral-3b-2512")
+                                            if file_handler.mistral_n_command_image:
+                                                raise utils.Error("Skipping Nemo for vision")
+                                            mistral_model = "Mistral Nemo 12B"
+                                            generate_handler.mistral_generate("open-mistral-nemo-2407")
                                     except Exception as e:
                                         memory_handler.log_errors(e)
-                                        print(f'Mistral API Key invalid / An error occurred: {e}')
+                                        if not mistral_thought:
+                                            try:
+                                                if question[0] == "@":  # Reasoning
+                                                    mistral_model = "Magistral Small 1.2"  # this model sucks just check the benchmarks
+                                                    generate_handler.mistral_generate("magistral-small-2509")
+                                                else:  # No reasoning
+                                                    mistral_model = "Ministral 3 3B"
+                                                    generate_handler.mistral_generate("ministral-3b-2512")
+                                            except Exception as e:
+                                                memory_handler.log_errors(e)
+                                                print(f'Mistral API Key invalid / An error occurred: {e}')
 
 def ask_command(question):
     global command_cot, command_response, command_thought, command_model
     command_cot = ""
     command_thought = False
     command_response = ""
+    original_error = ""
     try:  # Command A
         if question[0] == "@":  # Reasoning
             command_model = "Command A Reasoning"
@@ -264,19 +279,34 @@ def ask_command(question):
                 generate_handler.command_generate("command-a-03-2025")
     except Exception as e:
         memory_handler.log_errors(e)
+        original_error = e
         if not command_thought:
-            try:  # Command R+, fallback if A is not available, doesn't support reasoning and image reading
+            try:
+                if file_handler.mistral_n_command_image:
+                    raise utils.Error("Skipping Command R for vision")
                 command_model = "Command R+"
                 generate_handler.command_generate("command-r-plus-08-2024")
             except Exception as e:
                 memory_handler.log_errors(e)
                 if not command_thought:
-                    try:  # Command R, fallback if R+ is not available, doesn't support reasoning
+                    try:
+                        if file_handler.mistral_n_command_image:
+                            raise utils.Error("Skipping Command R for vision")
                         command_model = "Command R"
                         generate_handler.command_generate("command-r-08-2024")
                     except Exception as e:
                         memory_handler.log_errors(e)
-                        print(f'Cohere API Key invalid / An error occurred: {e}')
+                        if not command_thought:
+                            try:
+                                if file_handler.mistral_n_command_image:
+                                    raise utils.Error("Skipping Command R for vision")
+                                command_model = "Command R7B"
+                                generate_handler.command_generate("command-r7b-12-2024")
+                            except Exception as e:
+                                memory_handler.log_errors(e)
+                                if file_handler.mistral_n_command_image:
+                                    e = original_error
+                                print(f'Cohere API Key invalid / An error occurred: {e}')
 
 def merge_responses(question):
     global merged_messages, gemini_start_merging, gemini_merge_model
@@ -350,3 +380,79 @@ def merge_responses(question):
                                 except Exception as e:
                                     memory_handler.log_errors(e)
                                     print(f'Gemini API Key invalid / An error occurred: {e}')
+
+def choose_embed_model(allchunks):
+    global embed_model
+    try:
+        embed_model = "Embed 4"
+        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-v4.0", allchunks)
+    except Exception as e:
+        memory_handler.log_errors(e)
+        try:
+            embed_model = "Gemini Embedding 2"
+            query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-2-preview", allchunks)
+        except Exception as e:
+            memory_handler.log_errors(e)
+            try:
+                embed_model = "Gemini Embedding"
+                query_embedding, doc_embeddings = embedding_handler.gemini_embed("gemini-embedding-001", allchunks)
+            except Exception as e:
+                memory_handler.log_errors(e)
+                try:
+                    embed_model = "Embed 3"
+                    query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-v3.0", allchunks)
+                except Exception as e:
+                    memory_handler.log_errors(e)
+                    try:
+                        embed_model = "Embed Light 3"
+                        query_embedding, doc_embeddings = embedding_handler.embed_embed("embed-multilingual-light-v3.0", allchunks)
+                    except Exception as e:
+                        memory_handler.log_errors(e)
+                        try:
+                            embed_model = "Mistral Embed"  # insanely slow and reaches the rate-limit easily, not really an option for real-time rag
+                            query_embedding, doc_embeddings = embedding_handler.mistral_embed("mistral-embed-2312", allchunks)
+                        except Exception as e:
+                            memory_handler.log_errors(e)
+                            embed_model = ""
+                            print("An error occurred while embedding: ", e)
+                            return "error!", "error!"
+    return query_embedding, doc_embeddings
+
+def choose_rerank_model(similarities, top_k_results, question, allchunks):
+    global rerank_model
+    try:
+        rerank_model = "Rerank 4 Pro"
+        context_parts = embedding_handler.rerank_rerank("rerank-v4.0-pro", top_k_results, question)
+        utils.clear_screen()
+        print("Reranking... Done!")
+    except Exception as e:
+        memory_handler.log_errors(e)
+        try:
+            rerank_model = "Rerank 4 Fast"
+            context_parts = embedding_handler.rerank_rerank("rerank-v4.0-fast", top_k_results, question)
+            utils.clear_screen()
+            print("Reranking... Done!")
+        except Exception as e:
+            memory_handler.log_errors(e)
+            try:
+                rerank_model = "Rerank 3.5"
+                context_parts = embedding_handler.rerank_rerank("rerank-v3.5", top_k_results, question)
+                utils.clear_screen()
+                print("Reranking... Done!")
+            except Exception as e:
+                memory_handler.log_errors(e)
+                try:
+                    rerank_model = "Rerank 3"
+                    context_parts = embedding_handler.rerank_rerank("rerank-multilingual-v3.0", top_k_results, question)
+                    utils.clear_screen()
+                    print("Reranking... Done!")
+                except Exception as e:
+                    memory_handler.log_errors(e)
+                    rerank_model = ""
+                    top_k_indices = np.argsort(similarities)[::-1][:3]
+                    context_parts = []
+                    for rank, idx in enumerate(top_k_indices, 1):
+                        context_parts.append(f"[Reference material {rank}] (Similarity: {similarities[idx]:.2f})\n{allchunks[idx]}")
+                    utils.clear_screen()
+                    print("Reranking... Skipped! The rate limit might be reached!")
+    return context_parts
