@@ -107,7 +107,7 @@ def initialize_cohere():
             memory_handler.log_errors(e)
             cohere_client = None
 
-def ask_gemini(question):
+def choose_gemini_model(question):
     global gemini_cot, gemini_thought, gemini_model
     gemini_cot = ""
     gemini_thought = False
@@ -193,7 +193,7 @@ def ask_gemini(question):
                                                                 memory_handler.log_errors(e)
                                                                 print(f'Gemini API Key invalid / An error occurred: {e}')
 
-def ask_mistral(question):
+def choose_mistral_model(question):
     global mistral_cot, mistral_response, mistral_thought, mistral_model
     mistral_cot = ""
     mistral_thought = False
@@ -260,7 +260,7 @@ def ask_mistral(question):
                                                 memory_handler.log_errors(e)
                                                 print(f'Mistral API Key invalid / An error occurred: {e}')
 
-def ask_command(question):
+def choose_command_model(question):
     global command_cot, command_response, command_thought, command_model
     command_cot = ""
     command_thought = False
@@ -308,7 +308,7 @@ def ask_command(question):
                                     e = original_error
                                 print(f'Cohere API Key invalid / An error occurred: {e}')
 
-def merge_responses(question):
+def choose_merge_model(question):
     global merged_messages, gemini_start_merging, gemini_merge_model
     gemini_start_merging = time.perf_counter()
     merged_messages = [{"role": "user", "parts": [{"text": question}]}]

@@ -73,22 +73,22 @@ def handle_conversation(question):
                 else:
                     print ("\n-------------------------\n")
         memory_handler.memorize_question(question)
-        ask_gemini = threading.Thread(target=model_client.ask_gemini, args=(question,))
-        ask_mistral = threading.Thread(target=model_client.ask_mistral, args=(question,))
-        ask_command = threading.Thread(target=model_client.ask_command, args=(question,))
+        choose_gemini_model = threading.Thread(target=model_client.choose_gemini_model, args=(question,))
+        choose_mistral_model = threading.Thread(target=model_client.choose_mistral_model, args=(question,))
+        choose_command_model = threading.Thread(target=model_client.choose_command_model, args=(question,))
         thought_start = time.perf_counter()
 
         if not file_handler.skip_gemini:
-            ask_gemini.start()
+            choose_gemini_model.start()
         if not file_handler.skip_mistral_n_command:
-            ask_mistral.start()
-            ask_command.start()
+            choose_mistral_model.start()
+            choose_command_model.start()
         
         if not file_handler.skip_gemini:
-            ask_gemini.join()
+            choose_gemini_model.join()
         if not file_handler.skip_mistral_n_command:
-            ask_mistral.join()
-            ask_command.join()
+            choose_mistral_model.join()
+            choose_command_model.join()
 
         if not file_handler.skip_gemini and file_handler.skip_mistral_n_command:  # Gemini working here
             if model_client.embed_model and model_client.rerank_model:
@@ -107,7 +107,7 @@ def handle_conversation(question):
                 print(f"Mistral thought for {model_client.mistral_end_thinking} seconds, took {model_client.mistral_end_generating} seconds to generate the answer, generated {len(model_client.mistral_response)} characters.\nCommand thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} characters.\nEmbedded using {model_client.embed_model}, generated response using model {model_client.mistral_model} and {model_client.command_model}.\n\n-------------------------\n\nGenerating full response...")
             else:
                 print(f"Mistral thought for {model_client.mistral_end_thinking} seconds, took {model_client.mistral_end_generating} seconds to generate the answer, generated {len(model_client.mistral_response)} characters.\nCommand thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} characters.\nUsing model {model_client.mistral_model} and {model_client.command_model}.\n\n-------------------------\n\nGenerating full response...")
-            model_client.merge_responses(question)
+            model_client.choose_merge_model(question)
             response = model_client.merged_response
             if model_client.embed_model and model_client.rerank_model:
                 print (f"You: {question}\n\n-------------------------\n\n{model_client.merged_response}\n\n-------------------------\n\nThought for {model_client.gemini_merge_end_thinking} seconds in total, took {model_client.gemini_end_merging} seconds to merge the answers, generated {len(model_client.merged_response)} characters.\nEmbedded using {model_client.embed_model}, reranked using {model_client.rerank_model}.\nGenerated response using model {model_client.mistral_model} and {model_client.command_model}, merged using {model_client.gemini_merge_model}.\n\n-------------------------\n")
@@ -124,7 +124,7 @@ def handle_conversation(question):
                 print(f"Gemini thought for {model_client.gemini_end_thinking} seconds, took {model_client.gemini_end_generating} seconds to generate the answer, generated {len(model_client.gemini_response)} characters, using model {model_client.gemini_model}.\nMistral thought for {model_client.mistral_end_thinking} seconds, took {model_client.mistral_end_generating} seconds to generate the answer, generated {len(model_client.mistral_response)} characters, using model {model_client.mistral_model}.\nCommand thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} characters, using model {model_client.command_model}.\nEmbedded using {model_client.embed_model}.\n\n-------------------------\n\nGenerating full response...")
             else:
                 print(f"Gemini thought for {model_client.gemini_end_thinking} seconds, took {model_client.gemini_end_generating} seconds to generate the answer, generated {len(model_client.gemini_response)} characters, using model {model_client.gemini_model}.\nMistral thought for {model_client.mistral_end_thinking} seconds, took {model_client.mistral_end_generating} seconds to generate the answer, generated {len(model_client.mistral_response)} characters, using model {model_client.mistral_model}.\nCommand thought for {model_client.command_end_thinking} seconds, took {model_client.command_end_generating} seconds to generate the answer, generated {len(model_client.command_response)} characters, using model {model_client.command_model}.\n\n-------------------------\n\nGenerating full response...")
-            model_client.merge_responses(question)
+            model_client.choose_merge_model(question)
             response = model_client.merged_response
             if model_client.embed_model and model_client.rerank_model:
                 print (f"You: {question}\n\n-------------------------\n\n{model_client.merged_response}\n\n-------------------------\n\nThought for {model_client.gemini_merge_end_thinking} seconds in total, took {model_client.gemini_end_merging} seconds to merge the answers, generated {len(model_client.merged_response)} characters.\nEmbedded using {model_client.embed_model}, reranked using {model_client.rerank_model}.\nGenerated response using model {model_client.gemini_model}, {model_client.mistral_model}, and {model_client.command_model}, merged using {model_client.gemini_merge_model}.\n\n-------------------------\n")

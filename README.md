@@ -17,17 +17,44 @@
 - 表格增強生成 (TAG / Table-Augmented Generation)
 - RAG / TAG 支援多種檔案類型
 
-## 環境需求
+## 使用說明
+### Requirements
 - [Python](https://www.python.org/downloads/) 3.7 或更高
-- 必要套件請參考 [`requirements.txt`](https://github.com/raccoonaura/GeminiXCohere/blob/main/requirements.txt)
 - [Gemini](https://aistudio.google.com/api-keys)、[Mistral](https://console.mistral.ai/home?profile_dialog=api-keys) 及 [Cohere](https://dashboard.cohere.com/api-keys) 的 API Key
 - 若使用 RAG / TAG 時需要更多檔案類型的支援，請安裝 [LibreOffice](https://www.libreoffice.org/download/download-libreoffice/)，**請安裝於其預設安裝位置**
+### Install
+1. Clone repo
+```bash
+git clone https://github.com/raccoonaura/PolyGlue
+```
+2. 設定路徑
+```bash
+cd PolyGlue
+```
+3. 安裝依賴
+```bash
+pip install -r requirements.txt
+```
+4. 運行 CLI / App
+```bash
+python cli.py
+```
+```bash
+python app.py
+```
+5. 輸入 API Key
+- 開啟程式後分別輸入API Key，或把API key輸入在.env裡 (不會儲存於伺服器/程式中)
+### Usage
+- 在問題前面加上"@"可以開啟思考模式 (Reasoning)
+- 將需要被讀取的檔案放置在embeds資料夾
+- 在問題前面加上"$"可以開啟文檔檢索模式 (圖片讀取/RAG/TAG)
+- 在問題前面加上"$@"可以開啟文檔檢索及思考模式
 
 ## 專案架構
-- [README.md](https://github.com/raccoonaura/GeminiXCohere/blob/main/README.md): 主入口說明
-- [LICENSE](https://github.com/raccoonaura/GeminiXCohere/blob/main/LICENSE): 授權
-- [requirements.txt](https://github.com/raccoonaura/GeminiXCohere/blob/main/requirements.txt): 環境需求
-- [cli.py](https://github.com/raccoonaura/GeminiXCohere/blob/main/cli.py): CLI入口
-- [app.py](https://github.com/raccoonaura/GeminiXCohere/blob/main/app.py): App入口
-- [src/](https://github.com/raccoonaura/GeminiXCohere/tree/main/src): 程式碼
-- [docs/](https://github.com/raccoonaura/GeminiXCohere/tree/main/docs): 文檔
+- [README.md](https://github.com/raccoonaura/PolyGlue/blob/main/README.md): 主入口說明
+- [DOCS.md](https://github.com/raccoonaura/PolyGlue/tree/main/DOCS.md): 文檔
+- [LICENSE](https://github.com/raccoonaura/PolyGlue/blob/main/LICENSE): 授權
+- [requirements.txt](https://github.com/raccoonaura/PolyGlue/blob/main/requirements.txt): 環境需求
+- [cli.py](https://github.com/raccoonaura/PolyGlue/blob/main/cli.py): CLI入口
+- [app.py](https://github.com/raccoonaura/PolyGlue/blob/main/app.py): App入口
+- [src/](https://github.com/raccoonaura/PolyGlue/tree/main/src): 程式碼

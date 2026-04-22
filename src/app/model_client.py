@@ -38,7 +38,7 @@ def initialize_cohere(cohere_key_input, state):
         gr.Warning(f"Key is invalid! {e}", 3)
         return (gr.update(value=""), gr.update(), gr.update(), gr.update(), gr.update(), state, gr.update(), gr.update())
     
-def ask_gemini(reasoning, state):
+def choose_gemini_model(reasoning, state):
     state["gemini_cot"] = ""
     state["gemini_start"] = False
     state["gemini_end"] = False
@@ -81,7 +81,7 @@ def ask_gemini(reasoning, state):
     if state["gemini_end"]: gr.Info(f"Gemini thought for {state["gemini_end_thinking"]} seconds.\nTook {state["gemini_end_generating"]} seconds to generate the answer.\nGenerated {len(state["gemini_response"])} tokens.\nUsing model {state["gemini_model"]}.")
     return (gr.update(), gr.update(), gr.update(), state, gr.update(), gr.update(), gr.update())
 
-def ask_command(reasoning, state):
+def choose_command_model(reasoning, state):
     state["command_cot"] = ""
     state["command_start"] = False
     state["command_end"] = False
@@ -105,7 +105,7 @@ def ask_command(reasoning, state):
     if state["command_end"]: gr.Info(f"Command thought for {state["command_end_thinking"]} seconds.\nTook {state["command_end_generating"]} seconds to generate the answer.\nGenerated {len(state["command_response"])} tokens.\nUsing model {state["command_model"]}.")
     return (gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), state, gr.update())
 
-# def merge_responses(question, reasoning, state):
+# def choose_merge_model(question, reasoning, state):
 #     state["gemini_start_merging"] = time.perf_counter()
 #     state["merged_messages"] = [{"role": "user", "parts": [{"text": question}]}]
 #     try:  # Gemini 3 Pro, it doesn't support NO reasoning

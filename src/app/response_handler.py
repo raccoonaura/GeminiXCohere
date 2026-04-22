@@ -38,11 +38,11 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         #         if question[1] == "@": print ("Enabled reasoning! Please wait...\n\n-------------------------\n")
         #         else: print ("\n-------------------------\n")
         gemini_state, cohere_state = memory_handler.memorize_question(question, gemini_state, cohere_state)
-        yield from model_client.ask_gemini(reasoning, gemini_state)
-        yield from model_client.ask_command(reasoning, cohere_state)
+        yield from model_client.choose_gemini_model(reasoning, gemini_state)
+        yield from model_client.choose_command_model(reasoning, cohere_state)
 
-        # t1 = threading.Thread(target=model_client.ask_gemini, args=(reasoning, gemini_state))
-        # t2 = threading.Thread(target=model_client.ask_command, args=(reasoning, cohere_state))
+        # t1 = threading.Thread(target=model_client.choose_gemini_model, args=(reasoning, gemini_state))
+        # t2 = threading.Thread(target=model_client.choose_command_model, args=(reasoning, cohere_state))
         # t1.start()
         # t2.start()
         # gemini_state["thought_start"] = time.perf_counter()
@@ -50,19 +50,19 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # t1.join()
         # t2.join()
         # with ThreadPoolExecutor(max_workers=2) as executor:
-        #     ask_gemini = executor.submit(model_client.ask_gemini, reasoning, gemini_state)
-        #     ask_command = executor.submit(model_client.ask_command, reasoning, cohere_state)
+        #     choose_gemini_model = executor.submit(model_client.choose_gemini_model, reasoning, gemini_state)
+        #     choose_command_model = executor.submit(model_client.choose_command_model, reasoning, cohere_state)
         #     gemini_state["thought_start"] = time.perf_counter()
         #     cohere_state["thought_start"] = time.perf_counter()
-        #     gemini_state, gemini_textbox = ask_gemini.result()
-        #     command_state, command_textbox = ask_command.result()
+        #     gemini_state, gemini_textbox = choose_gemini_model.result()
+        #     command_state, command_textbox = choose_command_model.result()
 
         # if not file_handler.skip_gemini:
-        #     ask_gemini.start()
-        #     ask_gemini.join()
+        #     choose_gemini_model.start()
+        #     choose_gemini_model.join()
         # if not file_handler.skip_mistral_n_command:
-        #     ask_command.start()
-        #     ask_command.join()
+        #     choose_command_model.start()
+        #     choose_command_model.join()
 
         # if not file_handler.skip_gemini and file_handler.skip_mistral_n_command:
         # if state["embed_model"] and state["rerank_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens.\nEmbedded using {state["embed_model"]}, reranked using {state["rerank_model"]}, generated response using model {state["gemini_model"]}.\n\n-------------------------\n")
@@ -87,7 +87,7 @@ def handle_conversation(question, reasoning, gemini_state, cohere_state):
         # elif state["embed_model"]: print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens, using model {state["gemini_model"]}.\nCommand thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens, using model {state["command_model"]}.\nEmbedded using {state["embed_model"]}.\n\n-------------------------\n\nGenerating full response...")
         # else:
         # print(f"Gemini thought for {state["gemini_end_thinking"]} seconds, took {state["gemini_end_generating"]} seconds to generate the answer, generated {len(state["gemini_response"])} tokens, using model {state["gemini_model"]}.\nCommand thought for {state["command_end_thinking"]} seconds, took {state["command_end_generating"]} seconds to generate the answer, generated {len(state["command_response"])} tokens, using model {state["command_model"]}.\n\n-------------------------\n\nGenerating full response...")
-        # t3 = threading.Thread(target=state["merge_responses"], args=(question,))
+        # t3 = threading.Thread(target=state["choose_merge_model"], args=(question,))
         # t3.start()
         # t3.join()
         # if state["embed_model"] and state["rerank_model"]: print (f"You: {question}\n\n-------------------------\n\n{state["merged_response"]}\n\n-------------------------\n\nThought for {state["gemini_merge_end_thinking"]} seconds in total, took {state["gemini_end_merging"]} seconds to merge the answers, generated {len(state["merged_response"])} tokens.\nEmbedded using {state["embed_model"]}, reranked using {state["rerank_model"]}.\nGenerated response using model {state["gemini_model"]} and {state["command_model"]}, merged using {state["gemini_merge_model"]}.\n\n-------------------------\n")
