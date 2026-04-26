@@ -40,7 +40,7 @@
 - **Mistral**
     - ***(Reasoning)*** Mistral Small 4 → Magistral Medium 1.2 → Mistral Large 3 → Mistral Medium 3.1 → Mistral Medium 3 → Magistral Small 1.2
     - ***(No reasoning)*** Mistral Small 4 → Mistral Small 3.2 → Ministral 3 14B → Ministral 3 8B → Mistral Nemo 12B → Ministral 3 3B
-- **Cohere**
+- **Command**
     - Command A → Command R+ → Command R → Command R7B
 - **Embed**
     - Embed 4 → Gemini Embedding 2 → Gemini Embedding → Embed 3 → Embed Light 3 → Mistral Embed

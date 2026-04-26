@@ -50,9 +50,15 @@ python app.py
 - 在問題前面加上"$"可以開啟文檔檢索模式 (圖片讀取/RAG/TAG)
 - 在問題前面加上"$@"可以開啟文檔檢索及思考模式
 
+## 授權
+- Copyright (c) 2025 - 2026 meowaura
+- 本專案採用[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hant)授權
+- 您可以自由分享本作品，但必須標示作者姓名、不可用於商業用途，且不得改作。
+
 ## 專案架構
 - [README.md](https://github.com/raccoonaura/PolyGlue/blob/main/README.md): 主入口說明
 - [DOCS.md](https://github.com/raccoonaura/PolyGlue/tree/main/DOCS.md): 文檔
+- [TODO.md](https://github.com/raccoonaura/PolyGlue/tree/main/TODO.md): 待辦事項
 - [LICENSE](https://github.com/raccoonaura/PolyGlue/blob/main/LICENSE): 授權
 - [requirements.txt](https://github.com/raccoonaura/PolyGlue/blob/main/requirements.txt): 環境需求
 - [cli.py](https://github.com/raccoonaura/PolyGlue/blob/main/cli.py): CLI入口
