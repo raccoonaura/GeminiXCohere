@@ -19,7 +19,7 @@
 
 ## 使用說明
 ### Requirements
-- [Python](https://www.python.org/downloads/) 3.7 或更高
+- [Python](https://www.python.org/downloads/) 3.7 ~ 3.13.11 或更高
 - [Gemini](https://aistudio.google.com/api-keys)、[Mistral](https://console.mistral.ai/home?profile_dialog=api-keys) 及 [Cohere](https://dashboard.cohere.com/api-keys) 的 API Key
 - 若使用 RAG / TAG 時需要更多檔案類型的支援，請安裝 [LibreOffice](https://www.libreoffice.org/download/download-libreoffice/)，**請安裝於其預設安裝位置**
 ### Install

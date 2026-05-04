@@ -81,7 +81,7 @@ def gemini_generate(model, boolean=False):
     print ("\n\n-------------------------\n")
 
 def mistral_generate(model, boolean=False):
-    if boolean and model=="mistral-small-2603":
+    if boolean and (model=="mistral-small-2603" or model=="mistral-medium-3-5"):
         if response_handler.context:
             res = model_client.mistral_client.chat.stream(
                 model = model,

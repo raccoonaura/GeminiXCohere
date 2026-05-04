@@ -196,3 +196,6 @@ def handle_image(files):
         elif ext.lower() == ".gif":
             mistral_n_command_image.append(image_url.text)
         utils.clear_screen()
+
+def handle_ocr(images):
+    pass

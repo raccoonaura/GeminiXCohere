@@ -199,66 +199,75 @@ def choose_mistral_model(question):
     mistral_thought = False
     mistral_response = ""
     try:
-        mistral_model = "Mistral Small 4"
+        mistral_model = "Mistral Medium 3.5"  # looks really good on benchmark, and supports reasoning
         if question[0] == "@":  # Reasoning
-            generate_handler.mistral_generate("mistral-small-2603", True)
+            generate_handler.mistral_generate("mistral-medium-3-5", True)
         else:  # No reasoning
-            generate_handler.mistral_generate("mistral-small-2603")
+            generate_handler.mistral_generate("mistral-medium-3-5")
     except Exception as e:
         memory_handler.log_errors(e)
         if not mistral_thought:
             try:
+                mistral_model = "Mistral Small 4"
                 if question[0] == "@":  # Reasoning
-                    mistral_model = "Magistral Medium 1.2"
-                    generate_handler.mistral_generate("magistral-medium-2509")
+                    generate_handler.mistral_generate("mistral-small-2603", True)
                 else:  # No reasoning
-                    mistral_model = "Mistral Small 3.2"
-                    generate_handler.mistral_generate("mistral-small-2506")
+                    generate_handler.mistral_generate("mistral-small-2603")
             except Exception as e:
                 memory_handler.log_errors(e)
                 if not mistral_thought:
                     try:
                         if question[0] == "@":  # Reasoning
-                            mistral_model = "Mistral Large 3"
-                            generate_handler.mistral_generate("mistral-large-2512")
+                            mistral_model = "Magistral Medium 1.2"
+                            generate_handler.mistral_generate("magistral-medium-2509")
                         else:  # No reasoning
-                            mistral_model = "Ministral 3 14B"
-                            generate_handler.mistral_generate("ministral-14b-2512")
+                            mistral_model = "Mistral Small 3.2"
+                            generate_handler.mistral_generate("mistral-small-2506")
                     except Exception as e:
                         memory_handler.log_errors(e)
                         if not mistral_thought:
                             try:
                                 if question[0] == "@":  # Reasoning
-                                    mistral_model = "Mistral Medium 3.1"
-                                    generate_handler.mistral_generate("mistral-medium-2508")
+                                    mistral_model = "Mistral Large 3"
+                                    generate_handler.mistral_generate("mistral-large-2512")
                                 else:  # No reasoning
-                                    mistral_model = "Ministral 3 8B"
-                                    generate_handler.mistral_generate("ministral-8b-2512")
+                                    mistral_model = "Ministral 3 14B"
+                                    generate_handler.mistral_generate("ministral-14b-2512")
                             except Exception as e:
                                 memory_handler.log_errors(e)
                                 if not mistral_thought:
                                     try:
                                         if question[0] == "@":  # Reasoning
-                                            mistral_model = "Mistral Medium 3"
-                                            generate_handler.mistral_generate("mistral-medium-2505")
+                                            mistral_model = "Mistral Medium 3.1"
+                                            generate_handler.mistral_generate("mistral-medium-2508")
                                         else:  # No reasoning
-                                            if file_handler.mistral_n_command_image:
-                                                raise utils.Error("Skipping Nemo for vision")
-                                            mistral_model = "Mistral Nemo 12B"
-                                            generate_handler.mistral_generate("open-mistral-nemo-2407")
+                                            mistral_model = "Ministral 3 8B"
+                                            generate_handler.mistral_generate("ministral-8b-2512")
                                     except Exception as e:
                                         memory_handler.log_errors(e)
                                         if not mistral_thought:
                                             try:
                                                 if question[0] == "@":  # Reasoning
-                                                    mistral_model = "Magistral Small 1.2"  # this model sucks just check the benchmarks
-                                                    generate_handler.mistral_generate("magistral-small-2509")
+                                                    mistral_model = "Mistral Medium 3"
+                                                    generate_handler.mistral_generate("mistral-medium-2505")
                                                 else:  # No reasoning
-                                                    mistral_model = "Ministral 3 3B"
-                                                    generate_handler.mistral_generate("ministral-3b-2512")
+                                                    if file_handler.mistral_n_command_image:
+                                                        raise utils.Error("Skipping Nemo for vision")
+                                                    mistral_model = "Mistral Nemo 12B"
+                                                    generate_handler.mistral_generate("open-mistral-nemo-2407")
                                             except Exception as e:
                                                 memory_handler.log_errors(e)
-                                                print(f'Mistral API Key invalid / An error occurred: {e}')
+                                                if not mistral_thought:
+                                                    try:
+                                                        if question[0] == "@":  # Reasoning
+                                                            mistral_model = "Magistral Small 1.2"  # this model sucks just check the benchmarks
+                                                            generate_handler.mistral_generate("magistral-small-2509")
+                                                        else:  # No reasoning
+                                                            mistral_model = "Ministral 3 3B"
+                                                            generate_handler.mistral_generate("ministral-3b-2512")
+                                                    except Exception as e:
+                                                        memory_handler.log_errors(e)
+                                                        print(f'Mistral API Key invalid / An error occurred: {e}')
 
 def choose_command_model(question):
     global command_cot, command_response, command_thought, command_model

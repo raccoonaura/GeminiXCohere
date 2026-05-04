@@ -38,8 +38,8 @@
 - **Gemini**
     - Gemini 3.1 Pro → Gemini 3 Flash → Gemini 3.1 Flash Lite → Gemini 2.5 Pro → Gemini 2.5 Flash → Gemini 2.5 Flash Lite → Gemini 2.0 Flash → Gemini 2.0 Flash Lite
 - **Mistral**
-    - ***(Reasoning)*** Mistral Small 4 → Magistral Medium 1.2 → Mistral Large 3 → Mistral Medium 3.1 → Mistral Medium 3 → Magistral Small 1.2
-    - ***(No reasoning)*** Mistral Small 4 → Mistral Small 3.2 → Ministral 3 14B → Ministral 3 8B → Mistral Nemo 12B → Ministral 3 3B
+    - ***(Reasoning)*** Mistral Medium 3.5 → Mistral Small 4 → Magistral Medium 1.2 → Mistral Large 3 → Mistral Medium 3.1 → Mistral Medium 3 → Magistral Small 1.2
+    - ***(No reasoning)*** Mistral Medium 3.5 → Mistral Small 4 → Mistral Small 3.2 → Ministral 3 14B → Ministral 3 8B → Mistral Nemo 12B → Ministral 3 3B
 - **Command**
     - Command A → Command R+ → Command R → Command R7B
 - **Embed**
