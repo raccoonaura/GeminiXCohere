@@ -5,7 +5,6 @@ from pathlib import Path
 import pdfplumber
 import html2text
 import ebooklib
-import pymupdf
 import os
 
 handler = html2text.HTML2Text()
@@ -59,21 +58,17 @@ def epub_to_md(path):
 
 def pdf_to_md(path):
     list = []  # 轉換成Markdown後的每個頁面會存入這個清單中
+    do_ocr = False
     with pdfplumber.open(path) as pdf:  # 把檔案裡每一頁取出
         for page in pdf.pages:  # 一頁一頁處理
-            page_text = page.extract_text() or ""  # 如果頁面是空的 就不加入任何東西
-            # if page.extract_text():  # handling regularly
-            #     page_text = page.extract_text()
-            # elif page.images:  # if theres no text in the page
-            #     page_area = page.width * page.height
-            #     image_area = sum((image["x1"] - image["x0"]) * (image["y1"] - image["y0"]) for image in page.images)
-            #     if image_area / page_area >= 0.95:  # if the page is mostly made out of images
-            #         pages_to_ocr = []
-            #         pdf = pymupdf.open(path)  # open the pdf in PyMuPDF
-            #         for page in pdf:
-            #             pages_to_ocr.append(page.get_pixmap(dpi=300).tobytes("png"))  # transfer pages to bytes, to upload to litterbox later
-            #         file_handler.handle_ocr(pages_to_ocr)
-            #     else:
-            #         pass # TODO do image embedding
-            list.append(page_text)  # 把目前這個頁面存入清單中
-    return "\n\n".join(list)  # 把清單內每個頁面存入到一個字串中 每頁用空行隔開
+            if page.extract_text():  # handling regularly
+                page_text = page.extract_text()
+                list.append(page_text)  # 把目前這個頁面存入清單中
+            else:
+                do_ocr = True
+        if do_ocr:
+            print("The file is likely a scanned PDF! Mistral OCR 3 will be used, and will take a while!")
+            string = file_handler.handle_ocr(path)
+        else:
+            string = "\n\n".join(list)
+    return string

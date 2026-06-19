@@ -36,7 +36,7 @@
 6. 生成後顯示生成字數，思考/生成時長及使用的模型
 ## 所有支援的模型及 Fallback 順序
 - **Gemini**
-    - Gemini 3.1 Pro → Gemini 3 Flash → Gemini 3.1 Flash Lite → Gemini 2.5 Pro → Gemini 2.5 Flash → Gemini 2.5 Flash Lite → Gemini 2.0 Flash → Gemini 2.0 Flash Lite
+    - Gemini 3.5 Flash → Gemini 3.1 Pro → Gemini 3 Flash → Gemini 3.1 Flash Lite → Gemini 2.5 Pro → Gemini 2.5 Flash → Gemini 2.5 Flash Lite
 - **Mistral**
     - ***(Reasoning)*** Mistral Medium 3.5 → Mistral Small 4 → Magistral Medium 1.2 → Mistral Large 3 → Mistral Medium 3.1 → Mistral Medium 3 → Magistral Small 1.2
     - ***(No reasoning)*** Mistral Medium 3.5 → Mistral Small 4 → Mistral Small 3.2 → Ministral 3 14B → Ministral 3 8B → Mistral Nemo 12B → Ministral 3 3B
@@ -65,16 +65,17 @@
 - 可以透過輸入提示詞來重新發送
 ## 思考系統
 - 系統會偵測問題前是否有prefix "@"
-- 有 → 同時開啟三個模型的思考功能，並以文字提示思考已開啟
-- 無 → 不開啟思考功能 生成較快且節省token
+    - 有 → 同時開啟三個模型的思考功能，並以文字提示思考已開啟
+    - 無 → 不開啟思考功能 生成較快且節省token
 - 在思考過程中顯示模型的思考過程 (CoT/Chain-of-Thought)
 ## 檔案檢索系統
 - 系統會偵測問題前是否有prefix "$"
-- 有 → 進行檔案選擇 可選擇圖片/文檔/資料
-- 無 → 不開啟檔案檢索功能
+    - 有 → 進行檔案選擇 可選擇圖片/文檔/資料
+    - 無 → 不開啟檔案檢索功能
+- 若檔案偵測為扁平化/由圖片組成的PDF → 使用Mistral OCR 3來讀取並輸出字元
 - 程式本身支援以下檔案
-    - 文檔: .**txt**, .**md**/.**markdown**, .**pdf**, .**html**/.**htm**, .**epub**
-    - 圖片: .**png**, .**jpg**/.**jpeg**, .**webp**, .**heic**, .**heif**, .**gif**
+    - 文檔: .**txt**, .**markdown**/.**md**, .**pdf**, .**html**/.**htm**, .**epub**
+    - 圖片: .**png**, .**jpeg**/.**jpg**, .**webp**, .**heic**, .**heif**, .**gif**
     - 資料: .**xlsx**, .**xlsm**, .**xltx**, .**xltm**, .**xls**, .**xlsb**, .**odf**, .**ods**, .**odt**, .**csv**, .**tsv**, .**xml**, .**json**, .**yaml**
 - 若LibreOffice已安裝 會延伸支援以下檔案:
     - 文檔: .**rtf**, .**odt**, .**ott**, .**fodt**, .**odp**, .**otp**, .**fodp**, .**odm**, .**oth**, .**sxw**, .**stw**, .**sxg**, .**sxi**, .**sti**, .**docx**, .**dotx**, .**docm**, .**dotm**, .**doc**, .**dot**, .**pptx**, .**potx**, .**pptm**, .**potm**, .**ppt**, .**pot**

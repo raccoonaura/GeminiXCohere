@@ -1,6 +1,7 @@
 from src.cli import response_handler
 from src.cli import memory_handler
 from src.cli import file_handler
+from src.cli import model_client
 from src.cli import utils
 from pathlib import Path
 import subprocess
@@ -197,5 +198,16 @@ def handle_image(files):
             mistral_n_command_image.append(image_url.text)
         utils.clear_screen()
 
-def handle_ocr(images):
-    pass
+def handle_ocr(path):
+    with open(path, "rb") as f:
+        pdf_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php",
+        data={"reqtype": "fileupload", "time": "1h"}, files={"fileToUpload": f})
+    response = model_client.mistral_client.ocr.process(
+        model="mistral-ocr-2512",
+        document={
+            "type": "document_url",
+            "document_url": pdf_url.text
+        },
+        table_format="html"
+    )
+    return "\n\n".join(page.markdown for page in response.pages)

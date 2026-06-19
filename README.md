@@ -15,6 +15,7 @@
 - 圖片理解 (Image Understanding)
 - 檢索增強生成 (RAG / Retrieval-Augmented Generation)
 - 表格增強生成 (TAG / Table-Augmented Generation)
+- 檔案光學字元辨識系統 (OCR / Optical Character Recognition)
 - RAG / TAG 支援多種檔案類型
 
 ## 使用說明
