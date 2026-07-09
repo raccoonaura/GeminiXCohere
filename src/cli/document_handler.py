@@ -1,4 +1,6 @@
+from src.cli import memory_handler
 from src.cli import file_handler
+from src.cli import model_client
 from src.cli import utils
 from ebooklib import epub
 from pathlib import Path
@@ -67,8 +69,16 @@ def pdf_to_md(path):
             else:
                 do_ocr = True
         if do_ocr:
-            print("The file is likely a scanned PDF! Mistral OCR 3 will be used, and will take a while!")
-            string = file_handler.handle_ocr(path)
+            print("The file is likely a scanned PDF! Mistral OCR will be used, and might take a while!")
+            try:
+                model_client.ocr_model = "Mistral OCR 4"
+                model = "mistral-ocr-4-0"
+                string = file_handler.handle_ocr(path, model)
+            except Exception as e:
+                memory_handler.log_errors(e)
+                model_client.ocr_model = "Mistral OCR 3"
+                model = "mistral-ocr-2512"
+                string = file_handler.handle_ocr(path, model)
         else:
             string = "\n\n".join(list)
     return string

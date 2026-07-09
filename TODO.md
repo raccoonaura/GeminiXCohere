@@ -2,7 +2,7 @@
 
 ## 預計實作 (Will Implement)
 - ~~**OCR 文件讀取**~~ (已加入)
-    - 使用 Mistral OCR 3 或 OCRmyPDF 等工具來讀取並輸出由圖片（扁平化）組成的 PDF（或可能的其他檔案類型）內容。
+    - 使用 Mistral OCR 或 OCRmyPDF 等工具來讀取並輸出由圖片（扁平化）組成的 PDF（或可能的其他檔案類型）內容。
 - **多模態 RAG (Multimodal RAG)**
     - 鑑於 Gemini Embedding 與 Cohere Embed 皆支援圖片向量化，將使 RAG 系統能夠包含文件中的圖片。
 - **聯網搜尋整合 (Web Search Integration)**

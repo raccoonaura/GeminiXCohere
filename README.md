@@ -1,7 +1,7 @@
 # PolyGlue
 
 ## 專案簡述
-- 本專案能同時呼叫 Gemini、Mistral 與 Cohere 旗下模型，並整合回覆
+- 本專案能同時呼叫 Gemini 、 Mistral 與 Cohere 旗下模型，並整合回覆
 - 支援多回合對話、思考模式、文檔 RAG、圖片讀取
 
 ## 功能特色
@@ -51,11 +51,6 @@ python app.py
 - 在問題前面加上"$"可以開啟文檔檢索模式 (圖片讀取/RAG/TAG)
 - 在問題前面加上"$@"可以開啟文檔檢索及思考模式
 
-## 授權
-- Copyright (c) 2025 - 2026 meowaura
-- 本專案採用[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hant)授權
-- 您可以自由分享本作品，但必須標示作者姓名、不可用於商業用途，且不得改作。
-
 ## 專案架構
 - [README.md](https://github.com/raccoonaura/PolyGlue/blob/main/README.md): 主入口說明
 - [DOCS.md](https://github.com/raccoonaura/PolyGlue/tree/main/DOCS.md): 文檔
@@ -65,3 +60,8 @@ python app.py
 - [cli.py](https://github.com/raccoonaura/PolyGlue/blob/main/cli.py): CLI入口
 - [app.py](https://github.com/raccoonaura/PolyGlue/blob/main/app.py): App入口
 - [src/](https://github.com/raccoonaura/PolyGlue/tree/main/src): 程式碼
+
+## 授權
+- Copyright (c) 2025 - 2026 meowaura
+- 本專案採用[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hant)授權
+- 您可以自由分享本作品，但必須標示作者姓名、不可用於商業用途，且不得改作。

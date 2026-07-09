@@ -49,6 +49,7 @@ command_model = ""
 gemini_merge_model = ""
 embed_model = ""
 rerank_model = ""
+ocr_model = ""
 
 def initialize_gemini():
     global gemini_client

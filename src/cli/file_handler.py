@@ -198,12 +198,12 @@ def handle_image(files):
             mistral_n_command_image.append(image_url.text)
         utils.clear_screen()
 
-def handle_ocr(path):
+def handle_ocr(path, model):
     with open(path, "rb") as f:
         pdf_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php",
         data={"reqtype": "fileupload", "time": "1h"}, files={"fileToUpload": f})
     response = model_client.mistral_client.ocr.process(
-        model="mistral-ocr-2512",
+        model=model,
         document={
             "type": "document_url",
             "document_url": pdf_url.text

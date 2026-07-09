@@ -6,11 +6,10 @@ from src.cli import utils
 
 question = ""
 
-if __name__ == "__main__":
-    memory_handler.reset_logs()
-    memory_handler.reset_errors()
-    memory_handler.reset_caches()
-    file_handler.reset_temp()
+memory_handler.reset_logs()
+memory_handler.reset_errors()
+memory_handler.reset_caches()
+file_handler.reset_temp()
 model_client.initialize_gemini()
 model_client.initialize_mistral()
 model_client.initialize_cohere()
