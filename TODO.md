@@ -23,7 +23,7 @@
 ### Concept: 動態模型路由與篩選模式
 - 由小型模型（可能是 Gemini 3.1 Flash Lite 或 Mistral 4 Small）決定應使用的模型數量、種類以及程式處理模式。例如：
     - **簡單問題**：觸發**迅速模式 (Swift Mode)**，僅提供 Gemini 3.1 Flash Lite 的回答，不進行整合。
-    - **一般問題**：觸發**整合模式 (Merge Mode)**，讓 Gemini 整合來自 Gemini 3 Flash、Mistral Small 4 與 Command A 的回答。
+    - **一般問題**：觸發**整合模式 (Merge Mode)**，讓 Gemini 整合來自 Gemini 3.5 Flash、Mistral Medium 3.5 與 Command A+ 的回答。
     - **複雜問題**：觸發**篩選模式 (Refine Mode)**，由 Gemini 改進 Command 的回答，Mistral 改進 Gemini 的回答，Command 改進 Mistral 的回答，最後由 Gemini 整合並生成最終答案。
     - **程式碼相關問題**：根據問題複雜度觸發整合或篩選模式，並使用如 Codestral (效率回覆) 或 Devstral 2 (複雜問題) 等模型。
 - 結構化輸出 (Structured outputs) 非常適合此功能。例如：
@@ -33,7 +33,7 @@
         "mode": "swift mode",
         "coding related": false,
         "models": {
-            "gemini": "gemini-3.1-flash-lite-preview",
+            "gemini": "gemini-3.1-flash-lite",
             "mistral": null,
             "cohere": null,
             "merge": null
@@ -44,10 +44,10 @@
         "mode": "merge mode",
         "coding related": false,
         "models": {
-            "gemini": "gemini-3-flash-preview",
-            "mistral": "mistral-small-2603",
-            "cohere": "command-a-03-2025",
-            "merge": "gemini-3-flash-preview"
+            "gemini": "gemini-3.5-flash",
+            "mistral": "mistral-medium-3-5",
+            "cohere": "command-a-plus-05-2026",
+            "merge": "gemini-3.5-flash"
         }
     }
     // example 3 "*A really complex coding problem*"
@@ -57,7 +57,7 @@
         "models": {
             "gemini": "gemini-3.1-pro-preview",
             "mistral": "devstral-2512",
-            "cohere": "command-a-reasoning-08-2025",
+            "cohere": "command-a-plus-05-2026",
             "merge": "gemini-3.1-pro-preview"
         }
     }

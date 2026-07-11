@@ -144,7 +144,7 @@ def command_generate(model, value="disabled"):
     if response_handler.context:
         res = model_client.cohere_client.chat_stream(
             model = model,
-            messages = model_client.command_messages + [{"role": "system", "content": response_handler.context}],
+            messages = [{"role": "system", "content": response_handler.context}] + model_client.command_messages,  # having the system prompt in the front seems to fix command a+ (somehow)
             thinking = {"type": value},
         )
     else:

@@ -268,54 +268,62 @@ def choose_command_model(question):
     command_response = ""
     original_error = ""
     try:  # Command A
+        command_model = "Command A+"
         if question[0] == "@":  # Reasoning
-            command_model = "Command A Reasoning"
-            generate_handler.command_generate("command-a-reasoning-08-2025", "enabled")
+            generate_handler.command_generate("command-a-plus-05-2026", "enabled")
         else:  # No reasoning
-            if file_handler.mistral_n_command_image:
-                command_model = "Command A Vision"
-                generate_handler.command_generate("command-a-vision-07-2025")
-            else:
-                command_model = "Command A"
-                generate_handler.command_generate("command-a-03-2025")
+            generate_handler.command_generate("command-a-plus-05-2026")
     except Exception as e:
         memory_handler.log_errors(e)
         original_error = e
         if not command_thought:
-            try:
-                if file_handler.mistral_n_command_image:
-                    raise utils.Error("Skipping Command R for vision")
-                command_model = "Command R+"
-                generate_handler.command_generate("command-r-plus-08-2024")
+            try:  # Command A
+                command_model = "Command A"
+                if question[0] == "@":  # Reasoning
+                    generate_handler.command_generate("command-a-reasoning-08-2025", "enabled")
+                else:  # No reasoning
+                    if file_handler.mistral_n_command_image:
+                        generate_handler.command_generate("command-a-vision-07-2025")
+                    else:
+                        generate_handler.command_generate("command-a-03-2025")
             except Exception as e:
                 memory_handler.log_errors(e)
+                original_error = e
                 if not command_thought:
                     try:
                         if file_handler.mistral_n_command_image:
                             raise utils.Error("Skipping Command R for vision")
-                        command_model = "Command R"
-                        generate_handler.command_generate("command-r-08-2024")
+                        command_model = "Command R+"
+                        generate_handler.command_generate("command-r-plus-08-2024")
                     except Exception as e:
                         memory_handler.log_errors(e)
                         if not command_thought:
                             try:
                                 if file_handler.mistral_n_command_image:
                                     raise utils.Error("Skipping Command R for vision")
-                                command_model = "Command R7B"
-                                generate_handler.command_generate("command-r7b-12-2024")
+                                command_model = "Command R"
+                                generate_handler.command_generate("command-r-08-2024")
                             except Exception as e:
                                 memory_handler.log_errors(e)
-                                if file_handler.mistral_n_command_image:
-                                    e = original_error
-                                print(f'Cohere API Key invalid / An error occurred: {e}')
+                                if not command_thought:
+                                    try:
+                                        if file_handler.mistral_n_command_image:
+                                            raise utils.Error("Skipping Command R for vision")
+                                        command_model = "Command R7B"
+                                        generate_handler.command_generate("command-r7b-12-2024")
+                                    except Exception as e:
+                                        memory_handler.log_errors(e)
+                                        if file_handler.mistral_n_command_image:
+                                            e = original_error
+                                        print(f'Cohere API Key invalid / An error occurred: {e}')
 
 def choose_merge_model(question):
     global merged_messages, gemini_start_merging, gemini_merge_model
     gemini_start_merging = time.perf_counter()
     merged_messages = [{"role": "user", "parts": [{"text": question}]}]
     try:  # Gemini 3.5 flash
+        gemini_merge_model = "Gemini 3.5 Flash"
         if question[0] == "@":  # Reasoning
-            gemini_merge_model = "Gemini 3.5 Flash"
             generate_handler.gemini_merge("gemini-3.5-flash", True)
         else:  # No reasoning
             generate_handler.gemini_merge("gemini-3.5-flash", False)
@@ -343,9 +351,9 @@ def choose_merge_model(question):
                 try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
                     gemini_merge_model = "Gemini 3.1 Flash Lite"
                     if question[0] == "@":  # Reasoning
-                        generate_handler.gemini_merge("gemini-3.1-flash-lite-preview", True)
+                        generate_handler.gemini_merge("gemini-3.1-flash-lite", True)
                     else:  # No reasoning
-                        generate_handler.gemini_merge("gemini-3.1-flash-lite-preview", False)
+                        generate_handler.gemini_merge("gemini-3.1-flash-lite", False)
                     utils.clear_all()
                 except Exception as e:
                     memory_handler.log_errors(e)
