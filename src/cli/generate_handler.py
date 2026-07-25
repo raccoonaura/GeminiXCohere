@@ -11,50 +11,25 @@ import re
 def gemini_generate(model, boolean=False):
     utils.set_marker()
     model_client.gemini_parts = []
-    if model.startswith("gemini-3"):
-        if response_handler.context:
-            config = types.GenerateContentConfig(
-                thinking_config = types.ThinkingConfig(
-                    thinking_level = "high" if boolean else "medium",
-                    # 3.1 Pro supports "high", "medium", "low"
-                    # 3 Flash and Flash Lite supports "high", "medium", "low", "minimal"
-                    include_thoughts = boolean
-                ),
-                system_instruction = response_handler.context
-            )
-        else:
-            config = types.GenerateContentConfig(
-                thinking_config = types.ThinkingConfig(
-                    thinking_level = "high" if boolean else "medium",
-                    include_thoughts = boolean
-                )
-            )
+    if response_handler.spreadsheet:
+        model = "gemini-2.5-flash"
+        model_client.gemini_model = "Gemini 2.5 Flash"
+        config = types.GenerateContentConfig(
+            thinking_config = types.ThinkingConfig(
+                thinking_budget = -1 if boolean else 0,
+                include_thoughts = boolean
+            ),
+            system_instruction = response_handler.context,
+            tools = [spreadsheet_handler.sql_query]
+        )
     else:
-        if response_handler.context:
-            config = types.GenerateContentConfig(
-                thinking_config = types.ThinkingConfig(
-                    thinking_budget = -1 if boolean else 0,
-                    # somehow breaks 2.5 Pro?
-                    # UPDATE: i highly assume google is tweaking
-                    # 2.5 Pro is supposed to be free
-                    # (fact checked from their docs)
-                    # but im getting quota exceeded error
-                    # even tho i havent used 2.5 Pro in 2 weeks
-                    # and theres no usuage displaying
-                    # regarding 2.5 Pro in google ai studio
-                    # UPDATE UPDATE: we p2w nowadays
-                    include_thoughts = boolean
-                ),
-                system_instruction = response_handler.context,
-                tools = [spreadsheet_handler.sql_query]
-            )
-        else:
-            config = types.GenerateContentConfig(
-                thinking_config = types.ThinkingConfig(
-                    thinking_budget = -1 if boolean else 0,
-                    include_thoughts = boolean
-                )
-            )
+        config = types.GenerateContentConfig(
+            thinking_config = types.ThinkingConfig(
+                thinking_level = "high" if boolean else "medium",
+                include_thoughts = boolean
+            ),
+            system_instruction = response_handler.context if response_handler.context else None,
+        )
 
     for chunk in model_client.gemini_client.models.generate_content_stream(
         model = model,

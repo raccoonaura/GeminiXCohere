@@ -94,6 +94,22 @@ The following metadata describes the available tables and their structures:
 {datas}
 """
 
+sql_query_declaration = {
+    "type": "function",
+    "name": "sql_query",
+    "description": "Run a SQL SELECT query on a SQLite database and return the results.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "str",
+                "description": "A SQL SELECT query",
+            },
+        },
+        "required": ["query"],
+    },
+}  # not used yet
+
 def sql_query(query: str):
     """Run a SQL SELECT query on a SQLite database and return the results."""
     return pd.read_sql_query(query, sqlite3.connect("logs/caches/database.db")).to_dict(orient="records")
