@@ -11,37 +11,28 @@ import re
 def gemini_generate(model, boolean=False):
     utils.set_marker()
     model_client.gemini_parts = []
-    if response_handler.spreadsheet:
-        model = "gemini-2.5-flash"
-        model_client.gemini_model = "Gemini 2.5 Flash"
-        config = types.GenerateContentConfig(
-            thinking_config = types.ThinkingConfig(
-                thinking_budget = -1 if boolean else 0,
-                include_thoughts = boolean
-            ),
-            system_instruction = response_handler.context,
-            tools = [spreadsheet_handler.sql_query]
-        )
-    else:
-        config = types.GenerateContentConfig(
-            thinking_config = types.ThinkingConfig(
-                thinking_level = "high" if boolean else "medium",
-                include_thoughts = boolean
-            ),
-            system_instruction = response_handler.context if response_handler.context else None,
-        )
+    config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(
+            thinking_level = "high" if boolean else "medium",
+            include_thoughts = boolean
+        ),
+        system_instruction = response_handler.context if response_handler.context else None,
+        tools = [spreadsheet_handler.sql_query] if response_handler.spreadsheet else None
+    )
 
-    for chunk in model_client.gemini_client.models.generate_content_stream(
-        model = model,
-        contents = model_client.gemini_messages,
-        config = config
-    ):
-        for part in chunk.candidates[0].content.parts:
-            model_client.gemini_parts.append(part)
+    if response_handler.spreadsheet:
+        response = model_client.gemini_client.models.generate_content(
+            # for some FUCKING reason, you cant use automatic function calling with generate_content_stream after gemini 3
+            # if you do, the program just outputs nothing, what a nice fucking joke, google?
+            model = model,
+            contents = model_client.gemini_messages,
+            config = config
+        )
+        for part in response.candidates[0].content.parts:
             if not part.text:
                 continue
-            elif part.thought:
-                print(part.text)
+            if part.thought:
+                print(part.text, end="")
                 model_client.gemini_cot += part.text
             else:
                 if model_client.gemini_thought is False:
@@ -50,8 +41,30 @@ def gemini_generate(model, boolean=False):
                     model_client.gemini_thought = True
                     model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
                     model_client.gemini_start_generating = time.perf_counter()
-                print(part.text, end="")  # Real-time printing since the merged response can take a while
+                print(part.text, end="")
                 model_client.gemini_response += part.text
+    else:
+        for chunk in model_client.gemini_client.models.generate_content_stream(
+            model = model,
+            contents = model_client.gemini_messages,
+            config = config
+        ):
+            for part in chunk.candidates[0].content.parts:
+                model_client.gemini_parts.append(part)
+                if not part.text:
+                    continue
+                elif part.thought:
+                    print(part.text, end="")
+                    model_client.gemini_cot += part.text
+                else:
+                    if model_client.gemini_thought is False:
+                        if boolean:
+                            utils.clear_screen()
+                        model_client.gemini_thought = True
+                        model_client.gemini_end_thinking = f"{time.perf_counter() - response_handler.thought_start:.3f}"
+                        model_client.gemini_start_generating = time.perf_counter()
+                    print(part.text, end="")  # Real-time printing since the merged response can take a while
+                    model_client.gemini_response += part.text
     model_client.gemini_end_generating = f"{time.perf_counter() - model_client.gemini_start_generating:.3f}"
     print ("\n\n-------------------------\n")
 
@@ -179,16 +192,10 @@ Response 3:
 
 {response_handler.context}
 """
-    if model.startswith("gemini-3"):
-        config = types.GenerateContentConfig(
-            thinking_config = types.ThinkingConfig(thinking_level = "high" if boolean else "medium"),
-            system_instruction = instruction
-        )
-    else:
-        config = types.GenerateContentConfig(
-            thinking_config = types.ThinkingConfig(thinking_budget=-1 if boolean else 0),
-            system_instruction = instruction
-        )
+    config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(thinking_level = "high" if boolean else "medium"),
+        system_instruction = instruction
+    )
     response = model_client.gemini_client.models.generate_content(
         model = model,
         contents = model_client.merged_messages,
