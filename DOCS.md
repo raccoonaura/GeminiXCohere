@@ -36,7 +36,7 @@
 6. 生成後顯示生成字數，思考/生成時長及使用的模型
 ## 所有支援的模型及 Fallback 順序
 - **Gemini**
-    - Gemini 3.6 Flash → Gemini 3.5 Flash → Gemini 3.1 Pro → Gemini 3 Flash → Gemini 3.5 Flash Lite → Gemini 3.1 Flash Lite
+    - Gemini 3.7 Flash → Gemini 3.6 Flash → Gemini 3.5 Flash → Gemini 3.1 Pro → Gemini 3 Flash → Gemini 3.5 Flash Lite → Gemini 3.1 Flash Lite
 - **Mistral**
     - Mistral Medium 3.5 → Mistral Small 4 → Mistral Large 3 → Ministral 3 14B → Ministral 3 8B → Ministral 3 3B
 - **Command**
@@ -46,7 +46,7 @@
 - **Rerank**
     - Rerank 4 Pro → Rerank 4 Fast → Rerank 3.5 → Rerank 3
 - **OCR**
-    - Mistral OCR 4 → Mistral OCR 3
+    - Mistral OCR 4.1 → Mistral OCR 4 → Mistral OCR 3
 ## 錯誤處理系統
 - 產生一個以當下時間為名 txt 檔儲存錯誤紀錄
 - 每次的錯誤都儲存於檔案中，方便查看問題
