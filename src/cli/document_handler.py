@@ -70,24 +70,7 @@ def pdf_to_md(path):
                 do_ocr = True
         if do_ocr:
             print("The file is likely a scanned PDF! The file will be processed by the OCR system, and might take a while!")
-            try:
-                model_client.ocr_model = "Mistral OCR 4.1"
-                model = "mistral-ocr-4-1"
-                string = file_handler.handle_ocr(path, model)
-            except Exception as e:
-                memory_handler.log_errors(e)
-                try:
-                    model_client.ocr_model = "Mistral OCR 4"
-                    model = "mistral-ocr-4-0"
-                    string = file_handler.handle_ocr(path, model)
-                except Exception as e:
-                    memory_handler.log_errors(e)
-                    try:
-                        model_client.ocr_model = "Mistral OCR 3"
-                        model = "mistral-ocr-2512"
-                        string = file_handler.handle_ocr(path, model)
-                    except Exception as e:
-                        memory_handler.log_errors(e)
+            string = model_client.choose_ocr_model(path)
         else:
             string = "\n\n".join(list)
     return string

@@ -113,69 +113,78 @@ def choose_gemini_model(question):
     gemini_cot = ""
     gemini_thought = False
     # for some reason, Gemini 2.0 is called 2.0, Gemini 3 is called 3???????
-    try:  # Gemini 3.7 Flash
-        gemini_model = "Gemini 3.7 Flash"
+    try:  # Gemini 3.8 Flash
+        gemini_model = "Gemini 3.8 Flash"
         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-            generate_handler.gemini_generate("gemini-3.7-flash", True)
+            generate_handler.gemini_generate("gemini-3.8-flash", True)
         else:  # No reasoning
-            generate_handler.gemini_generate("gemini-3.7-flash")
+            generate_handler.gemini_generate("gemini-3.8-flash")
     except Exception as e:
         memory_handler.log_errors(e)
         if not gemini_thought:
-            try:  # Gemini 3.6 Flash
-                gemini_model = "Gemini 3.6 Flash"
+            try:  # Gemini 3.7 Flash
+                gemini_model = "Gemini 3.7 Flash"
                 if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                    generate_handler.gemini_generate("gemini-3.6-flash", True)
+                    generate_handler.gemini_generate("gemini-3.7-flash", True)
                 else:  # No reasoning
-                    generate_handler.gemini_generate("gemini-3.6-flash")
+                    generate_handler.gemini_generate("gemini-3.7-flash")
             except Exception as e:
                 memory_handler.log_errors(e)
                 if not gemini_thought:
-                    try:  # Gemini 3.5 Flash
-                        gemini_model = "Gemini 3.5 Flash"
+                    try:  # Gemini 3.6 Flash
+                        gemini_model = "Gemini 3.6 Flash"
                         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                            generate_handler.gemini_generate("gemini-3.5-flash", True)
+                            generate_handler.gemini_generate("gemini-3.6-flash", True)
                         else:  # No reasoning
-                            generate_handler.gemini_generate("gemini-3.5-flash")
+                            generate_handler.gemini_generate("gemini-3.6-flash")
                     except Exception as e:
                         memory_handler.log_errors(e)
                         if not gemini_thought:
-                            try:  # Gemini 3.1 Pro, it doesn't support NO reasoning
+                            try:  # Gemini 3.5 Flash
+                                gemini_model = "Gemini 3.5 Flash"
                                 if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                    gemini_model = "Gemini 3.1 Pro"
-                                    generate_handler.gemini_generate("gemini-3.1-pro-preview", True)
+                                    generate_handler.gemini_generate("gemini-3.5-flash", True)
                                 else:  # No reasoning
-                                    raise utils.Error("Pro requires thinking")
+                                    generate_handler.gemini_generate("gemini-3.5-flash")
                             except Exception as e:
                                 memory_handler.log_errors(e)
                                 if not gemini_thought:
-                                    try:  # Gemini 3 Flash, fallback if Pro is not available
-                                        gemini_model = "Gemini 3 Flash"
+                                    try:  # Gemini 3.1 Pro, it doesn't support NO reasoning
                                         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                            generate_handler.gemini_generate("gemini-3-flash-preview", True)
+                                            gemini_model = "Gemini 3.1 Pro"
+                                            generate_handler.gemini_generate("gemini-3.1-pro-preview", True)
                                         else:  # No reasoning
-                                            generate_handler.gemini_generate("gemini-3-flash-preview")
+                                            raise utils.Error("Pro requires thinking")
                                     except Exception as e:
                                         memory_handler.log_errors(e)
                                         if not gemini_thought:
-                                            try:  # Gemini 3.5 Flash Lite, fallback if Flash is not available
-                                                gemini_model = "Gemini 3.5 Flash Lite"
+                                            try:  # Gemini 3 Flash, fallback if Pro is not available
+                                                gemini_model = "Gemini 3 Flash"
                                                 if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                                    generate_handler.gemini_generate("gemini-3.5-flash-lite", True)
+                                                    generate_handler.gemini_generate("gemini-3-flash-preview", True)
                                                 else:  # No reasoning
-                                                    generate_handler.gemini_generate("gemini-3.5-flash-lite")
+                                                    generate_handler.gemini_generate("gemini-3-flash-preview")
                                             except Exception as e:
                                                 memory_handler.log_errors(e)
                                                 if not gemini_thought:
-                                                    try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
-                                                        gemini_model = "Gemini 3.1 Flash Lite"
+                                                    try:  # Gemini 3.5 Flash Lite, fallback if Flash is not available
+                                                        gemini_model = "Gemini 3.5 Flash Lite"
                                                         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                                            generate_handler.gemini_generate("gemini-3.1-flash-lite", True)
+                                                            generate_handler.gemini_generate("gemini-3.5-flash-lite", True)
                                                         else:  # No reasoning
-                                                            generate_handler.gemini_generate("gemini-3.1-flash-lite")
+                                                            generate_handler.gemini_generate("gemini-3.5-flash-lite")
                                                     except Exception as e:
                                                         memory_handler.log_errors(e)
-                                                        print(f'Gemini API Key invalid / An error occurred: {e}')
+                                                        if not gemini_thought:
+                                                            try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
+                                                                gemini_model = "Gemini 3.1 Flash Lite"
+                                                                if question[0] == "@" or question[0:2] == "$@":  # Reasoning
+                                                                    generate_handler.gemini_generate("gemini-3.1-flash-lite", True)
+                                                                else:  # No reasoning
+                                                                    generate_handler.gemini_generate("gemini-3.1-flash-lite")
+                                                            except Exception as e:
+                                                                memory_handler.log_errors(e)
+                                                                print(f'Gemini API Key invalid / An error occurred: {e}')
 
 def choose_mistral_model(question):
     global mistral_cot, mistral_response, mistral_thought, mistral_model
@@ -285,70 +294,79 @@ def choose_merge_model(question):
     global merged_messages, gemini_start_merging, gemini_merge_model
     gemini_start_merging = time.perf_counter()
     merged_messages = [{"role": "user", "parts": [{"text": question}]}]
-    try:  # Gemini 3.7 flash
-        gemini_merge_model = "Gemini 3.7 Flash"
+    try:  # Gemini 3.8 flash
+        gemini_merge_model = "Gemini 3.8 Flash"
         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-            generate_handler.gemini_merge("gemini-3.7-flash", True)
+            generate_handler.gemini_merge("gemini-3.8-flash", True)
         else:  # No reasoning
-            generate_handler.gemini_merge("gemini-3.7-flash", False)
+            generate_handler.gemini_merge("gemini-3.8-flash", False)
         utils.clear_all()
     except Exception as e:
         memory_handler.log_errors(e)
-        try:  # Gemini 3.6 flash
-            gemini_merge_model = "Gemini 3.6 Flash"
+        try:  # Gemini 3.7 flash
+            gemini_merge_model = "Gemini 3.7 Flash"
             if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                generate_handler.gemini_merge("gemini-3.6-flash", True)
+                generate_handler.gemini_merge("gemini-3.7-flash", True)
             else:  # No reasoning
-                generate_handler.gemini_merge("gemini-3.6-flash", False)
+                generate_handler.gemini_merge("gemini-3.7-flash", False)
             utils.clear_all()
         except Exception as e:
             memory_handler.log_errors(e)
-            try:  # Gemini 3.5 flash
-                gemini_merge_model = "Gemini 3.5 Flash"
+            try:  # Gemini 3.6 flash
+                gemini_merge_model = "Gemini 3.6 Flash"
                 if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                    generate_handler.gemini_merge("gemini-3.5-flash", True)
+                    generate_handler.gemini_merge("gemini-3.6-flash", True)
                 else:  # No reasoning
-                    generate_handler.gemini_merge("gemini-3.5-flash", False)
+                    generate_handler.gemini_merge("gemini-3.6-flash", False)
                 utils.clear_all()
             except Exception as e:
                 memory_handler.log_errors(e)
-                try:  # Gemini 3.1 Pro, it doesn't support NO reasoning
+                try:  # Gemini 3.5 flash
+                    gemini_merge_model = "Gemini 3.5 Flash"
                     if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                        gemini_merge_model = "Gemini 3.1 Pro"
-                        generate_handler.gemini_merge("gemini-3.1-pro-preview", True)
+                        generate_handler.gemini_merge("gemini-3.5-flash", True)
                     else:  # No reasoning
-                        raise utils.Error("Pro requires thinking")
+                        generate_handler.gemini_merge("gemini-3.5-flash", False)
                     utils.clear_all()
                 except Exception as e:
                     memory_handler.log_errors(e)
-                    try:  # Gemini 3 Flash, fallback if Pro is not available
-                        gemini_merge_model = "Gemini 3 Flash"
+                    try:  # Gemini 3.1 Pro, it doesn't support NO reasoning
                         if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                            generate_handler.gemini_merge("gemini-3-flash-preview", True)
+                            gemini_merge_model = "Gemini 3.1 Pro"
+                            generate_handler.gemini_merge("gemini-3.1-pro-preview", True)
                         else:  # No reasoning
-                            generate_handler.gemini_merge("gemini-3-flash-preview", False)
+                            raise utils.Error("Pro requires thinking")
                         utils.clear_all()
                     except Exception as e:
                         memory_handler.log_errors(e)
-                        try:  # Gemini 3.5 flash
-                            gemini_merge_model = "Gemini 3.5 Flash Lite"
+                        try:  # Gemini 3 Flash, fallback if Pro is not available
+                            gemini_merge_model = "Gemini 3 Flash"
                             if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                generate_handler.gemini_merge("gemini-3.5-flash-lite", True)
+                                generate_handler.gemini_merge("gemini-3-flash-preview", True)
                             else:  # No reasoning
-                                generate_handler.gemini_merge("gemini-3.5-flash-lite", False)
+                                generate_handler.gemini_merge("gemini-3-flash-preview", False)
                             utils.clear_all()
                         except Exception as e:
                             memory_handler.log_errors(e)
-                            try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
-                                gemini_merge_model = "Gemini 3.1 Flash Lite"
+                            try:  # Gemini 3.5 flash
+                                gemini_merge_model = "Gemini 3.5 Flash Lite"
                                 if question[0] == "@" or question[0:2] == "$@":  # Reasoning
-                                    generate_handler.gemini_merge("gemini-3.1-flash-lite", True)
+                                    generate_handler.gemini_merge("gemini-3.5-flash-lite", True)
                                 else:  # No reasoning
-                                    generate_handler.gemini_merge("gemini-3.1-flash-lite", False)
+                                    generate_handler.gemini_merge("gemini-3.5-flash-lite", False)
                                 utils.clear_all()
                             except Exception as e:
                                 memory_handler.log_errors(e)
-                                print(f'Gemini API Key invalid / An error occurred: {e}')
+                                try:  # Gemini 3.1 Flash Lite, fallback if Flash is not available
+                                    gemini_merge_model = "Gemini 3.1 Flash Lite"
+                                    if question[0] == "@" or question[0:2] == "$@":  # Reasoning
+                                        generate_handler.gemini_merge("gemini-3.1-flash-lite", True)
+                                    else:  # No reasoning
+                                        generate_handler.gemini_merge("gemini-3.1-flash-lite", False)
+                                    utils.clear_all()
+                                except Exception as e:
+                                    memory_handler.log_errors(e)
+                                    print(f'Gemini API Key invalid / An error occurred: {e}')
 
 def choose_embed_model(allchunks):
     global embed_model
@@ -425,3 +443,28 @@ def choose_rerank_model(similarities, top_k_results, question, allchunks):
                     utils.clear_screen()
                     print("Reranking... Skipped! The rate limit might be reached!")
     return context_parts
+
+def choose_ocr_model(path):
+    global ocr_model
+    try:
+        raise utils.Error("Parse currently doesn't support document file URL inputs. Will remove this line when they added the feature.")
+        ocr_model = "Parse 5"
+        string = file_handler.handle_ocr(path, "parse-v5.0")
+    except Exception as e:
+        memory_handler.log_errors(e)
+        try:
+            ocr_model = "Mistral OCR 4.1"
+            string = file_handler.handle_ocr(path, "mistral-ocr-4-1")
+        except Exception as e:
+            memory_handler.log_errors(e)
+            try:
+                ocr_model = "Mistral OCR 4"
+                string = file_handler.handle_ocr(path, "mistral-ocr-4-0")
+            except Exception as e:
+                memory_handler.log_errors(e)
+                try:
+                    ocr_model = "Mistral OCR 3"
+                    string = file_handler.handle_ocr(path, "mistral-ocr-2512")
+                except Exception as e:
+                    memory_handler.log_errors(e)
+    return string

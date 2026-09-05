@@ -202,12 +202,23 @@ def handle_ocr(path, model):
     with open(path, "rb") as f:
         pdf_url = requests.post("https://litterbox.catbox.moe/resources/internals/api.php",
         data={"reqtype": "fileupload", "time": "1h"}, files={"fileToUpload": f})
-    response = model_client.mistral_client.ocr.process(
-        model=model,
-        document={
-            "type": "document_url",
-            "document_url": pdf_url.text
-        },
-        table_format="html"
-    )
+    if "parse" in model:
+        response = model_client.cohere_client.parse(
+            model=model,
+            document={
+                "type": "document_url",
+                "image_url": data_uri
+            },
+        )
+    elif "mistral" in model:
+        response = model_client.mistral_client.ocr.process(
+            model=model,
+            document={
+                "type": "document_url",
+                "document_url": pdf_url.text
+            },
+            table_format="html"
+        )
+    else:
+        memory_handler.log_errors(f"Unrecognized OCR model name detected: {model}")
     return "\n\n".join(page.markdown for page in response.pages)
